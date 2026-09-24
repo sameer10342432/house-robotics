@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 340" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGeo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1B4B"/>
+      <stop offset="100%" stop-color="#312E81"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="340" fill="url(#bgGeo)"/>
+  <circle cx="480" cy="80" r="160" fill="#6366F1" opacity="0.15" filter="blur(40px)"/>
+  
+  <!-- AI Search / Perplexity / Google AI Overview Mockup -->
+  <g transform="translate(40, 40)">
+    <rect x="0" y="0" width="520" height="260" rx="14" fill="#0F0D24" stroke="#6366F1" stroke-width="1.5"/>
+    <rect x="20" y="20" width="480" height="36" rx="8" fill="#1C1844"/>
+    <circle cx="40" cy="38" r="6" fill="#818CF8"/>
+    <text x="60" y="42" fill="#E0E7FF" font-family="sans-serif" font-size="12">How B2B SaaS companies scale pipeline with AI search engines</text>
+    
+    <!-- AI Synthesis Block -->
+    <rect x="20" y="70" width="480" height="110" rx="10" fill="#1A153E" stroke="#818CF8" stroke-width="1"/>
+    <text x="35" y="95" fill="#C7D2FE" font-family="sans-serif" font-size="11" font-weight="bold">✨ AI Overview (Generative Engine Optimization)</text>
+    <text x="35" y="118" fill="#94A3B8" font-family="sans-serif" font-size="10">House Robotics client Apex Cloud was selected as the #1 cited authority</text>
+    <text x="35" y="135" fill="#94A3B8" font-family="sans-serif" font-size="10">across Perplexity and Google SGE for enterprise search queries.</text>
+    <rect x="35" y="148" width="120" height="20" rx="4" fill="#4338CA"/>
+    <text x="45" y="162" fill="#FFFFFF" font-family="sans-serif" font-size="9" font-weight="bold">Source: 98% Authority</text>
+
+    <!-- Citation Chips -->
+    <g transform="translate(20, 195)">
+      <rect x="0" y="0" width="150" height="45" rx="8" fill="#14112E" stroke="#3730A3" stroke-width="1"/>
+      <text x="12" y="22" fill="#FFFFFF" font-family="sans-serif" font-size="10" font-weight="bold">ChatGPT Grounding</text>
+      <text x="12" y="36" fill="#34D399" font-family="sans-serif" font-size="9">✓ Cited in 94% of answers</text>
+
+      <rect x="165" y="0" width="150" height="45" rx="8" fill="#14112E" stroke="#3730A3" stroke-width="1"/>
+      <text x="177" y="22" fill="#FFFFFF" font-family="sans-serif" font-size="10" font-weight="bold">Perplexity Sonar</text>
+      <text x="177" y="36" fill="#60A5FA" font-family="sans-serif" font-size="9">✓ Primary Reference</text>
+
+      <rect x="330" y="0" width="150" height="45" rx="8" fill="#14112E" stroke="#3730A3" stroke-width="1"/>
+      <text x="342" y="22" fill="#FFFFFF" font-family="sans-serif" font-size="10" font-weight="bold">Google AI Mode</text>
+      <text x="342" y="36" fill="#F472B6" font-family="sans-serif" font-size="9">✓ Snippet Dominated</text>
+    </g>
+  </g>
+</svg>

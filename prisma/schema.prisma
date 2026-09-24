@@ -1,0 +1,430 @@
+// Prisma schema for House Robotics Production Backend
+// Compatible with SQLite (local development) and PostgreSQL (production)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id                   String        @id @default(uuid())
+  name                 String
+  email                String        @unique
+  passwordHash         String
+  role                 String        @default("ADMIN") // SUPER_ADMIN, ADMIN, EDITOR
+  isActive             Boolean       @default(true)
+  lastLogin            DateTime?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  leadNotes            LeadNote[]
+  activityLogs         ActivityLog[]
+
+  @@map("admin_users")
+}
+
+model Service {
+  id               String               @id @default(uuid())
+  title            String
+  slug             String               @unique
+  category         String               @default("Marketing") // Marketing, Technology, AI & Automation, Growth
+  shortDescription String
+  longDescription  String
+  heroImage        String?
+  icon             String               @default("Sparkles")
+  status           String               @default("PUBLISHED") // PUBLISHED, DRAFT, ARCHIVED
+  featured         Boolean              @default(false)
+  sortOrder        Int                  @default(0)
+  metricsLabel     String?
+  metricsValue     String?
+  gradient         String?              @default("from-violet-600 to-blue-600")
+  seoTitle         String?
+  metaDescription  String?
+  focusKeyword     String?
+  canonicalUrl     String?
+  ogImage          String?
+  noIndex          Boolean              @default(false)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  features         ServiceFeature[]
+  benefits         ServiceBenefit[]
+  processSteps     ServiceProcessStep[]
+  faqs             ServiceFaq[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+  @@map("services")
+}
+
+model ServiceFeature {
+  id          String   @id @default(uuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([serviceId])
+  @@map("service_features")
+}
+
+model ServiceBenefit {
+  id          String   @id @default(uuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([serviceId])
+  @@map("service_benefits")
+}
+
+model ServiceProcessStep {
+  id          String   @id @default(uuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  stepNumber  String   // "01", "02", etc.
+  title       String
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([serviceId])
+  @@map("service_process_steps")
+}
+
+model ServiceFaq {
+  id        String   @id @default(uuid())
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  status    String   @default("PUBLISHED")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceId])
+  @@map("service_faqs")
+}
+
+model BlogCategory {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  posts       BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogTag {
+  id        String        @id @default(uuid())
+  name      String
+  slug      String        @unique
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  postTags  BlogPostTag[]
+
+  @@map("blog_tags")
+}
+
+model BlogPost {
+  id                  String         @id @default(uuid())
+  title               String
+  slug                String         @unique
+  excerpt             String
+  content             String         // HTML or Markdown
+  featuredImage       String?
+  featuredImageAlt    String?
+  featuredImageCaption String?
+  author              String         @default("House Robotics Strategy Team")
+  authorRole          String?        @default("Growth Strategist")
+  authorBio           String?
+  authorAvatar        String?        @default("/images/avatar-marcus.svg")
+  readTime            String         @default("5 min read")
+  categoryId          String?
+  category            BlogCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  status              String         @default("PUBLISHED") // DRAFT, PUBLISHED, SCHEDULED, ARCHIVED
+  featured            Boolean        @default(false)
+  views               Int            @default(0)
+  publishedAt         DateTime?
+  scheduledAt         DateTime?
+  seoTitle            String?
+  metaDescription     String?
+  focusKeyword        String?
+  canonicalUrl        String?
+  ogTitle             String?
+  ogDescription       String?
+  ogImage             String?
+  twitterTitle        String?
+  twitterDescription  String?
+  twitterImage        String?
+  noIndex             Boolean        @default(false)
+  relatedPostIds      String?        // JSON array of post IDs
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  postTags            BlogPostTag[]
+  revisions           BlogRevision[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([categoryId])
+  @@index([publishedAt])
+  @@map("blog_posts")
+}
+
+model BlogPostTag {
+  id        String   @id @default(uuid())
+  postId    String
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@map("blog_post_tags")
+}
+
+model BlogRevision {
+  id        String   @id @default(uuid())
+  postId    String
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  excerpt   String
+  author    String
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+  @@map("blog_revisions")
+}
+
+model Testimonial {
+  id         String   @id @default(uuid())
+  clientName String
+  company    String
+  role       String
+  photo      String?
+  rating     Int      @default(5)
+  review     String
+  highlight  String?
+  status     String   @default("APPROVED") // APPROVED, PENDING, REJECTED
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status])
+  @@map("testimonials")
+}
+
+model Faq {
+  id        String   @id @default(uuid())
+  question  String
+  answer    String
+  category  String   @default("General")
+  sortOrder Int      @default(0)
+  status    String   @default("PUBLISHED")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([status])
+  @@map("faqs")
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  inquiryId String   @unique // HR-INQ-2026-XXXX
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  service   String?
+  budget    String?
+  message   String
+  status    String   @default("UNREAD") // UNREAD, READ, REPLIED, ARCHIVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+  @@map("contact_messages")
+}
+
+model Lead {
+  id         String     @id @default(uuid())
+  inquiryId  String?    @unique
+  name       String
+  email      String
+  phone      String?
+  company    String?
+  service    String?
+  budget     String?
+  message    String?
+  source     String     @default("Website") // Website, Contact Form, WhatsApp, Google, PPC, etc.
+  status     String     @default("NEW") // NEW, CONTACTED, QUALIFIED, PROPOSAL_SENT, WON, LOST
+  assignedTo String?
+  score      Int        @default(50)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  notes      LeadNote[]
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model LeadNote {
+  id         String     @id @default(uuid())
+  leadId     String
+  lead       Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  adminId    String?
+  admin      AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  authorName String     @default("Admin")
+  note       String
+  createdAt  DateTime   @default(now())
+
+  @@index([leadId])
+  @@map("lead_notes")
+}
+
+model NewsletterSubscriber {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  name           String?
+  status         String    @default("SUBSCRIBED") // SUBSCRIBED, UNSUBSCRIBED
+  source         String    @default("Website Footer")
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@map("newsletter_subscribers")
+}
+
+model SeoMetadata {
+  id                 String   @id @default(uuid())
+  pagePath           String   @unique // "/", "/services", "/about", "/contact", "/blog", "/services/seo"
+  seoTitle           String
+  metaDescription    String
+  focusKeyword       String?
+  canonicalUrl       String?
+  ogTitle            String?
+  ogDescription      String?
+  ogImage            String?
+  twitterTitle       String?
+  twitterDescription String?
+  twitterImage       String?
+  noIndex            Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([pagePath])
+  @@map("seo_metadata")
+}
+
+model SiteSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  group     String   @default("general") // general, contact, social, seo, analytics
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([group])
+  @@map("site_settings")
+}
+
+model Author {
+  id        String   @id @default(uuid())
+  name      String
+  role      String?
+  bio       String?
+  avatar    String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("authors")
+}
+
+model Media {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  altText      String?
+  title        String?
+  caption      String?
+  description  String?
+  width        Int?
+  height       Int?
+  uploadedBy   String?
+  createdAt    DateTime @default(now())
+
+  @@map("media")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventType String   // PAGE_VIEW, CTA_CLICK, WHATSAPP_CLICK, FORM_SUBMIT, NEWSLETTER_SUBMIT
+  eventName String
+  pageUrl   String?
+  referrer  String?
+  userAgent String?
+  ipHash    String?
+  metadata  String?  // JSON formatted payload
+  createdAt DateTime @default(now())
+
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
+
+model ActivityLog {
+  id        String     @id @default(uuid())
+  adminId   String?
+  admin     AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  adminName String     @default("System")
+  action    String     // LOGIN, CREATE_SERVICE, UPDATE_LEAD, etc.
+  entity    String     // Lead, Service, Blog, etc.
+  entityId  String?
+  metadata  String?    // JSON formatted changes
+  timestamp DateTime   @default(now())
+
+  @@index([adminId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("activity_logs")
+}

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgMarcus" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="100" fill="url(#bgMarcus)"/>
+  <!-- Head & Shoulders Silhouette / Stylized Portrait -->
+  <circle cx="100" cy="75" r="35" fill="#F8FAFC"/>
+  <!-- Hair & Beard -->
+  <path d="M 65 72 C 65 42, 135 42, 135 72 C 135 78, 130 85, 125 75 C 115 55, 85 55, 75 75 Z" fill="#1E293B"/>
+  <path d="M 80 92 C 85 105, 115 105, 120 92 C 122 108, 78 108, 80 92 Z" fill="#1E293B"/>
+  <!-- Eyes & Glasses -->
+  <rect x="75" y="70" width="20" height="12" rx="3" fill="none" stroke="#0F172A" stroke-width="2"/>
+  <rect x="105" y="70" width="20" height="12" rx="3" fill="none" stroke="#0F172A" stroke-width="2"/>
+  <line x1="95" y1="76" x2="105" y2="76" stroke="#0F172A" stroke-width="2"/>
+  <!-- Shoulders & Suit -->
+  <path d="M 40 190 C 45 135, 155 135, 160 190 Z" fill="#0F172A"/>
+  <polygon points="90,140 100,165 110,140" fill="#3B82F6"/>
+  <!-- Collar -->
+  <polygon points="85,140 100,155 100,140" fill="#FFFFFF"/>
+  <polygon points="115,140 100,155 100,140" fill="#FFFFFF"/>
+</svg>

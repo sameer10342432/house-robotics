@@ -1,0 +1,13 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+*.zip
+cpanel_production/
+config/config.local.php
+database/*.sqlite
+database/*.sqlite-journal

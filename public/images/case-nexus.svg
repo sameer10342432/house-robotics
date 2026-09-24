@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="nexusBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="50%" stop-color="#0369A1"/>
+      <stop offset="100%" stop-color="#082F49"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#nexusBg)"/>
+  
+  <g transform="translate(60, 45)">
+    <!-- Browser Window Container -->
+    <rect x="0" y="0" width="680" height="360" rx="16" fill="#041E2F" stroke="#0284C7" stroke-width="2"/>
+    <rect x="0" y="0" width="680" height="38" rx="16" fill="#075985"/>
+    <circle cx="25" cy="19" r="5" fill="#EF4444"/>
+    <circle cx="45" cy="19" r="5" fill="#F59E0B"/>
+    <circle cx="65" cy="19" r="5" fill="#10B981"/>
+    <rect x="180" y="10" width="320" height="18" rx="9" fill="#041E2F"/>
+    <text x="230" y="23" fill="#BAE6FD" font-family="monospace" font-size="11">nexuswealth.com/lead-engine</text>
+
+    <!-- Visual B2B Deal Pipeline -->
+    <g transform="translate(30, 60)">
+      <rect x="0" y="0" width="370" height="260" rx="14" fill="#082F49" stroke="#0284C7" stroke-width="1"/>
+      <text x="20" y="30" fill="#E0F2FE" font-family="sans-serif" font-size="13" font-weight="bold">AI Autonomous Inbound Qualification</text>
+      
+      <!-- Lead 1 -->
+      <g transform="translate(20, 50)">
+        <rect x="0" y="0" width="330" height="50" rx="8" fill="#0C4A6E" stroke="#38BDF8" stroke-width="1"/>
+        <circle cx="25" cy="25" r="14" fill="#0284C7"/>
+        <text x="20" y="29" fill="#FFFFFF" font-family="sans-serif" font-size="12" font-weight="bold">E</text>
+        <text x="50" y="23" fill="#FFFFFF" font-family="sans-serif" font-size="12" font-weight="bold">Enterprise Asset Fund</text>
+        <text x="50" y="38" fill="#7DD3FC" font-family="sans-serif" font-size="10">$12M Liquidity Event · Qualified</text>
+        <rect x="245" y="14" width="75" height="22" rx="4" fill="#10B981"/>
+        <text x="255" y="29" fill="#FFFFFF" font-family="sans-serif" font-size="10" font-weight="bold">CALLED</text>
+      </g>
+
+      <!-- Lead 2 -->
+      <g transform="translate(20, 115)">
+        <rect x="0" y="0" width="330" height="50" rx="8" fill="#0C4A6E" stroke="#0369A1" stroke-width="1"/>
+        <circle cx="25" cy="25" r="14" fill="#0284C7"/>
+        <text x="20" y="29" fill="#FFFFFF" font-family="sans-serif" font-size="12" font-weight="bold">T</text>
+        <text x="50" y="23" fill="#FFFFFF" font-family="sans-serif" font-size="12" font-weight="bold">Tech Founder Exit</text>
+        <text x="50" y="38" fill="#7DD3FC" font-family="sans-serif" font-size="10">$25M Succession Planning</text>
+        <rect x="245" y="14" width="75" height="22" rx="4" fill="#0284C7"/>
+        <text x="255" y="29" fill="#FFFFFF" font-family="sans-serif" font-size="10" font-weight="bold">ROUTED</text>
+      </g>
+
+      <!-- Lead 3 -->
+      <g transform="translate(20, 180)">
+        <rect x="0" y="0" width="330" height="50" rx="8" fill="#0C4A6E" stroke="#0369A1" stroke-width="1"/>
+        <circle cx="25" cy="25" r="14" fill="#0284C7"/>
+        <text x="20" y="29" fill="#FFFFFF" font-family="sans-serif" font-size="12" font-weight="bold">S</text>
+        <text x="50" y="23" fill="#FFFFFF" font-family="sans-serif" font-size="12" font-weight="bold">Series B Family Office</text>
+        <text x="50" y="38" fill="#7DD3FC" font-family="sans-serif" font-size="10">Consultation Booked</text>
+        <rect x="245" y="14" width="75" height="22" rx="4" fill="#8B5CF6"/>
+        <text x="255" y="29" fill="#FFFFFF" font-family="sans-serif" font-size="10" font-weight="bold">BOOKED</text>
+      </g>
+    </g>
+
+    <!-- Side Metrics -->
+    <g transform="translate(420, 60)">
+      <rect x="0" y="0" width="230" height="260" rx="14" fill="#082F49" stroke="#0284C7" stroke-width="1"/>
+      <text x="20" y="35" fill="#BAE6FD" font-family="sans-serif" font-size="11" font-weight="bold">PIPELINE OUTCOME</text>
+      
+      <text x="20" y="75" fill="#94A3B8" font-family="sans-serif" font-size="10">AUM PIPELINE ADDED</text>
+      <text x="20" y="105" fill="#38BDF8" font-family="sans-serif" font-size="28" font-weight="bold">$28M+</text>
+      
+      <line x1="20" y1="125" x2="210" y2="125" stroke="#0C4A6E" stroke-width="1"/>
+      
+      <text x="20" y="150" fill="#94A3B8" font-family="sans-serif" font-size="10">ACQUISITION COST</text>
+      <text x="20" y="180" fill="#10B981" font-family="sans-serif" font-size="28" font-weight="bold">-61%</text>
+      
+      <line x1="20" y1="200" x2="210" y2="200" stroke="#0C4A6E" stroke-width="1"/>
+      
+      <text x="20" y="225" fill="#7DD3FC" font-family="sans-serif" font-size="11" font-weight="bold">Zero Manual Data Entry</text>
+    </g>
+  </g>
+</svg>

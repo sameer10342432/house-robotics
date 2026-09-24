@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Ensure window.fetch has both a getter and a setter to prevent
+      // "TypeError: Cannot set property fetch of #<Window> which has only a getter"
+      // when preview frames or third-party wrappers assign to window.fetch
+      (function() {
+        try {
+          var originalFetch = window.fetch;
+          var desc = Object.getOwnPropertyDescriptor(window, 'fetch');
+          if (!desc) {
+            var proto = Object.getPrototypeOf(window);
+            if (proto) desc = Object.getOwnPropertyDescriptor(proto, 'fetch');
+          }
+          if (!desc || !desc.set) {
+            Object.defineProperty(window, 'fetch', {
+              configurable: true,
+              enumerable: true,
+              get: function() {
+                return originalFetch;
+              },
+              set: function(fn) {
+                originalFetch = fn;
+              }
+            });
+          }
+        } catch (e) {
+          // Gracefully suppress if non-configurable
+        }
+      })();
+    </script>
+    <title>House Robotics - Full-Service Digital Marketing & Technology Agency</title>
+    <meta name="description" content="House Robotics combines digital marketing, AI automation, SEO, web development, and performance advertising to help ambitious businesses scale faster." />
+    
+    <!-- Favicon & Device Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#6D28D9" />
+
+    <meta property="og:title" content="House Robotics - Full-Service Digital Marketing & Technology Agency" />
+    <meta property="og:description" content="House Robotics combines digital marketing, AI automation, SEO, web development, and performance advertising to help ambitious businesses scale faster." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-white text-neutral-900 antialiased selection:bg-purple-100 selection:text-purple-900">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
