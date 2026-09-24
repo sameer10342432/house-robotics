@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="urbanBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064E3B"/>
+      <stop offset="50%" stop-color="#065F46"/>
+      <stop offset="100%" stop-color="#022C22"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#urbanBg)"/>
+  
+  <g transform="translate(60, 45)">
+    <!-- Browser Window Container -->
+    <rect x="0" y="0" width="680" height="360" rx="16" fill="#042017" stroke="#059669" stroke-width="2"/>
+    <rect x="0" y="0" width="680" height="38" rx="16" fill="#064E3B"/>
+    <circle cx="25" cy="19" r="5" fill="#EF4444"/>
+    <circle cx="45" cy="19" r="5" fill="#F59E0B"/>
+    <circle cx="65" cy="19" r="5" fill="#10B981"/>
+    <rect x="180" y="10" width="320" height="18" rx="9" fill="#022C22"/>
+    <text x="240" y="23" fill="#6EE7B7" font-family="monospace" font-size="11">urbanstride.com/store</text>
+
+    <!-- Product Visual & Checkout Mockup -->
+    <g transform="translate(40, 60)">
+      <rect x="0" y="0" width="280" height="260" rx="14" fill="#064E3B" stroke="#10B981" stroke-width="1"/>
+      <rect x="20" y="20" width="240" height="130" rx="10" fill="#022C22" stroke="#047857" stroke-width="1"/>
+      
+      <!-- Sneaker / Product Graphic Silhouette -->
+      <path d="M 60 100 Q 100 80 150 90 T 220 80 Q 230 110 210 120 L 70 120 Z" fill="#34D399" opacity="0.8"/>
+      <text x="35" y="45" fill="#A7F3D0" font-family="sans-serif" font-size="12" font-weight="bold">Carbon Pro V2 Runner</text>
+      <text x="35" y="175" fill="#FFFFFF" font-family="sans-serif" font-size="18" font-weight="bold">$189.00</text>
+      <text x="110" y="175" fill="#6EE7B7" font-family="sans-serif" font-size="12" text-decoration="line-through">$249.00</text>
+      <rect x="20" y="195" width="240" height="42" rx="8" fill="#10B981"/>
+      <text x="65" y="222" fill="#022C22" font-family="sans-serif" font-size="13" font-weight="bold">1-Click Express Buy</text>
+    </g>
+
+    <!-- Metrics Cards on Right -->
+    <g transform="translate(345, 60)">
+      <!-- Speed Metric -->
+      <rect x="0" y="0" width="295" height="75" rx="12" fill="#064E3B" stroke="#059669" stroke-width="1"/>
+      <text x="20" y="28" fill="#A7F3D0" font-family="sans-serif" font-size="11">PAGE LOAD TIME</text>
+      <text x="20" y="58" fill="#34D399" font-family="sans-serif" font-size="26" font-weight="bold">0.42s</text>
+      <text x="100" y="55" fill="#6EE7B7" font-family="sans-serif" font-size="11">Sub-second headless Edge</text>
+
+      <!-- Conversion Rate -->
+      <rect x="0" y="90" width="295" height="75" rx="12" fill="#064E3B" stroke="#059669" stroke-width="1"/>
+      <text x="20" y="118" fill="#A7F3D0" font-family="sans-serif" font-size="11">CONVERSION RATE</text>
+      <text x="20" y="148" fill="#FFFFFF" font-family="sans-serif" font-size="26" font-weight="bold">4.2%</text>
+      <text x="95" y="145" fill="#34D399" font-family="sans-serif" font-size="11">From 1.8% baseline (+133%)</text>
+
+      <!-- Extra Revenue -->
+      <rect x="0" y="180" width="295" height="80" rx="12" fill="#022C22" stroke="#047857" stroke-width="1"/>
+      <text x="20" y="208" fill="#A7F3D0" font-family="sans-serif" font-size="11">ANNUAL REVENUE IMPACT</text>
+      <text x="20" y="242" fill="#6EE7B7" font-family="sans-serif" font-size="26" font-weight="bold">+$1.8M ARR</text>
+    </g>
+  </g>
+</svg>

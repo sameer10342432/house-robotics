@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgSarah" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="100" fill="url(#bgSarah)"/>
+  <!-- Hair Behind -->
+  <path d="M 52 75 C 45 130, 50 170, 65 185 Z" fill="#92400E"/>
+  <path d="M 148 75 C 155 130, 150 170, 135 185 Z" fill="#92400E"/>
+  <!-- Face -->
+  <circle cx="100" cy="78" r="33" fill="#FFFBEB"/>
+  <!-- Auburn Hair Styled -->
+  <path d="M 64 72 C 60 38, 140 38, 136 72 C 140 90, 135 110, 130 120 C 120 95, 125 58, 100 58 C 75 58, 80 95, 70 120 C 65 110, 60 90, 64 72 Z" fill="#92400E"/>
+  <!-- Confident Eyes & Smile -->
+  <circle cx="88" cy="78" r="3" fill="#1E293B"/>
+  <circle cx="112" cy="78" r="3" fill="#1E293B"/>
+  <path d="M 93 92 Q 100 98 107 92" fill="none" stroke="#B45309" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Navy Performance Blazer -->
+  <path d="M 40 190 C 45 135, 155 135, 160 190 Z" fill="#1E3A8A"/>
+  <polygon points="85,138 100,165 115,138" fill="#DBEAFE"/>
+</svg>

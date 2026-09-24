@@ -1,0 +1,19 @@
+# Prevent script execution inside uploads
+<FilesMatch "(?i)\.(php|php3|php4|php5|php7|php8|phtml|phar|pl|py|cgi|sh|bash|exe|bat|cmd|vbs|js|jsp|asp|aspx|htm|html|shtml|htaccess|ini)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Disable CGI execution and directory listings
+Options -ExecCGI -Indexes
+
+# If mod_php is loaded, disable engine
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>

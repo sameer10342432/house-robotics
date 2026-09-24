@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgAlex" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#064E3B"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="100" fill="url(#bgAlex)"/>
+  <!-- Face -->
+  <circle cx="100" cy="78" r="34" fill="#FEF3C7"/>
+  <!-- Tech Glasses & Wavy Hair -->
+  <path d="M 66 68 C 65 38, 135 38, 134 68 C 128 52, 115 48, 100 48 C 85 48, 72 52, 66 68 Z" fill="#18181B"/>
+  <rect x="75" y="72" width="22" height="14" rx="4" fill="none" stroke="#059669" stroke-width="2"/>
+  <rect x="103" y="72" width="22" height="14" rx="4" fill="none" stroke="#059669" stroke-width="2"/>
+  <line x1="97" y1="78" x2="103" y2="78" stroke="#059669" stroke-width="2"/>
+  <circle cx="86" cy="79" r="2.5" fill="#18181B"/>
+  <circle cx="114" cy="79" r="2.5" fill="#18181B"/>
+  <!-- Minimalist Black Turtleneck -->
+  <path d="M 40 190 C 45 130, 155 130, 160 190 Z" fill="#18181B"/>
+  <rect x="85" y="120" width="30" height="20" rx="4" fill="#18181B"/>
+</svg>
