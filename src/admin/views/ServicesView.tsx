@@ -31,7 +31,12 @@ export const ServicesView: React.FC = () => {
     icon: 'Briefcase',
     featured: false,
     status: 'PUBLISHED',
-    sortOrder: 0
+    sortOrder: 0,
+    seoTitle: '',
+    metaDescription: '',
+    focusKeyword: '',
+    canonicalUrl: '',
+    noIndex: false
   });
 
   useEffect(() => {
@@ -62,7 +67,12 @@ export const ServicesView: React.FC = () => {
       icon: srv.icon || 'Briefcase',
       featured: srv.featured || false,
       status: srv.status || 'PUBLISHED',
-      sortOrder: srv.sortOrder || 0
+      sortOrder: srv.sortOrder || 0,
+      seoTitle: srv.seoTitle || '',
+      metaDescription: srv.metaDescription || '',
+      focusKeyword: srv.focusKeyword || '',
+      canonicalUrl: srv.canonicalUrl || `https://houserobotics.online/${srv.slug}`,
+      noIndex: srv.noIndex || false
     });
     setIsCreating(false);
   };
@@ -77,7 +87,12 @@ export const ServicesView: React.FC = () => {
       icon: 'Briefcase',
       featured: false,
       status: 'PUBLISHED',
-      sortOrder: services.length + 1
+      sortOrder: services.length + 1,
+      seoTitle: '',
+      metaDescription: '',
+      focusKeyword: '',
+      canonicalUrl: '',
+      noIndex: false
     });
     setIsCreating(true);
   };
@@ -357,6 +372,81 @@ export const ServicesView: React.FC = () => {
                       className="rounded border-neutral-300 text-[#6D28D9]"
                     />
                     <span>Featured on Home</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* SEO & Meta Fields */}
+              <div className="pt-4 border-t border-[#E9E7F2] space-y-3">
+                <div className="font-bold text-neutral-900 text-xs flex items-center justify-between">
+                  <span>SEO &amp; Search Optimization (Section 50/52)</span>
+                  <span className="text-[10px] text-neutral-400 font-normal">Search engine indexing fields</span>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-neutral-700">SEO Meta Title</label>
+                    <span className={`text-[10px] font-mono ${formData.seoTitle.length > 60 ? 'text-red-600 font-bold' : 'text-neutral-500'}`}>
+                      {formData.seoTitle.length} / 60 chars {formData.seoTitle.length > 60 && '(Exceeds)'}
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.seoTitle}
+                    onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
+                    placeholder={`${formData.title} | House Robotics`}
+                    className="w-full px-3 py-2 rounded-xl border border-[#E9E7F2] bg-[#FAF9FF] text-neutral-900 focus:outline-none focus:border-[#6D28D9]"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-neutral-700">Meta Description</label>
+                    <span className={`text-[10px] font-mono ${formData.metaDescription.length > 160 ? 'text-red-600 font-bold' : 'text-neutral-500'}`}>
+                      {formData.metaDescription.length} / 160 chars {formData.metaDescription.length > 160 && '(Exceeds)'}
+                    </span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={formData.metaDescription}
+                    onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                    placeholder={formData.shortDescription}
+                    className="w-full px-3 py-2 rounded-xl border border-[#E9E7F2] bg-[#FAF9FF] text-neutral-900 focus:outline-none focus:border-[#6D28D9]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-neutral-700 mb-1">Focus Keyword</label>
+                    <input
+                      type="text"
+                      value={formData.focusKeyword}
+                      onChange={(e) => setFormData({ ...formData, focusKeyword: e.target.value })}
+                      placeholder="e.g. SEO services"
+                      className="w-full px-3 py-2 rounded-xl border border-[#E9E7F2] bg-[#FAF9FF] text-neutral-900 focus:outline-none focus:border-[#6D28D9]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-neutral-700 mb-1">Canonical URL</label>
+                    <input
+                      type="text"
+                      value={formData.canonicalUrl}
+                      onChange={(e) => setFormData({ ...formData, canonicalUrl: e.target.value })}
+                      placeholder={`https://houserobotics.online/${formData.slug}`}
+                      className="w-full px-3 py-2 rounded-xl border border-[#E9E7F2] bg-[#FAF9FF] text-neutral-900 font-mono text-[11px] focus:outline-none focus:border-[#6D28D9]"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer font-bold text-neutral-700">
+                    <input
+                      type="checkbox"
+                      checked={formData.noIndex}
+                      onChange={(e) => setFormData({ ...formData, noIndex: e.target.checked })}
+                      className="rounded border-neutral-300 text-[#6D28D9]"
+                    />
+                    <span>No-Index (Hide from Google Search Engines)</span>
                   </label>
                 </div>
               </div>

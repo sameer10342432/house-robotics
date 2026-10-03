@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ArrowRight, TrendingUp, CheckCircle2, Globe, Shield, Sparkles, Layers, FileText, BarChart3, Database } from 'lucide-react';
+import { Search, ArrowRight, TrendingUp, CheckCircle2, Globe, Shield, Sparkles, Layers, FileText, BarChart3, Database, ChevronRight } from 'lucide-react';
 import { SEOVisual } from '../components/SEOVisual';
 import { 
   TechnicalSeoVisual, 
@@ -37,6 +37,15 @@ export const SeoPage: React.FC<SeoPageProps> = ({ onNavigate, onOpenConsultation
               animate="visible"
               className="lg:col-span-6 space-y-6 text-left"
             >
+              {/* Visual Breadcrumb Navigation */}
+              <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold mb-2">
+                <span onClick={() => onNavigate('home')} className="hover:text-neutral-900 cursor-pointer">Home</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span onClick={() => onNavigate('services')} className="hover:text-neutral-900 cursor-pointer">Services</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span className="text-[#6D28D9]">Search Engine Optimization</span>
+              </div>
+
               <motion.div variants={heroItemVariant} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F3F0FF] text-[#6D28D9] text-xs font-bold border border-violet-100 shadow-xs">
                 <Search className="w-3.5 h-3.5 animate-pulse" />
                 <span>High-Intent Search Visibility</span>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, ArrowRight, DollarSign, TrendingUp, Filter, CheckCircle2, Shield, Sparkles, BarChart2, MousePointerClick, RefreshCw } from 'lucide-react';
+import { Target, ArrowRight, DollarSign, TrendingUp, Filter, CheckCircle2, Shield, Sparkles, BarChart2, MousePointerClick, RefreshCw, ChevronRight } from 'lucide-react';
 import { PpcVisual } from '../components/PpcVisual';
 import { GoogleSearchAdVisual, MetaRetargetingVisual, PpcDashboardVisual } from '../components/PpcVisualComponents';
 import { CTASection } from '../components/CTASection';
@@ -31,6 +31,15 @@ export const PpcPage: React.FC<PpcPageProps> = ({ onNavigate, onOpenConsultation
               animate="visible"
               className="lg:col-span-6 space-y-6 text-left"
             >
+              {/* Visual Breadcrumb Navigation */}
+              <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold mb-2">
+                <span onClick={() => onNavigate('home')} className="hover:text-neutral-900 cursor-pointer">Home</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span onClick={() => onNavigate('services')} className="hover:text-neutral-900 cursor-pointer">Services</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span className="text-[#6D28D9]">PPC & Paid Advertising</span>
+              </div>
+
               <motion.div variants={heroItemVariant} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F3F0FF] text-[#6D28D9] text-xs font-bold border border-violet-100 shadow-xs">
                 <Target className="w-3.5 h-3.5 animate-pulse" />
                 <span>Performance Paid Media</span>

@@ -1,4 +1,6 @@
 <?php
+putenv('DB_DRIVER=sqlite');
+putenv('DB_SQLITE_PATH=' . __DIR__ . '/../database/dev.sqlite');
 // Local router script to emulate Apache .htaccess during local testing with PHP built-in server
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $file = __DIR__ . '/../cpanel_production' . $uri;

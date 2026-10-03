@@ -1,5 +1,5 @@
 import React from 'react';
-import { Share2, ArrowRight, Heart, MessageCircle, TrendingUp, Calendar, Video, Sparkles, CheckCircle2, Target, Users, Megaphone } from 'lucide-react';
+import { Share2, ArrowRight, Heart, MessageCircle, TrendingUp, Calendar, Video, Sparkles, CheckCircle2, Target, Users, Megaphone, ChevronRight } from 'lucide-react';
 import { SocialVisual } from '../components/SocialVisual';
 import { 
   InstagramMockup, 
@@ -35,6 +35,15 @@ export const SocialMediaPage: React.FC<SocialMediaPageProps> = ({ onNavigate, on
               animate="visible"
               className="lg:col-span-6 space-y-6 text-left"
             >
+              {/* Visual Breadcrumb Navigation */}
+              <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold mb-2">
+                <span onClick={() => onNavigate('home')} className="hover:text-neutral-900 cursor-pointer">Home</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span onClick={() => onNavigate('services')} className="hover:text-neutral-900 cursor-pointer">Services</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span className="text-[#6D28D9]">Social Media Marketing</span>
+              </div>
+
               <motion.div variants={heroItemVariant} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F3F0FF] text-[#6D28D9] text-xs font-bold border border-violet-100 shadow-xs">
                 <Share2 className="w-3.5 h-3.5 animate-pulse" />
                 <span>Creative Marketing &amp; Audience Growth</span>

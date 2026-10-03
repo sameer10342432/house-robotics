@@ -142,8 +142,8 @@ export const MediaLibraryModal: React.FC<MediaLibraryModalProps> = ({
         title: file.name.replace(/\.[^/.]+$/, '')
       });
 
-      if (res.success && res.data) {
-        const newMedia = res.data;
+      const newMedia = res.data || (res as any).media;
+      if (res.success && newMedia) {
         setItems(prev => [newMedia, ...prev]);
         setSelectedItem(newMedia);
         setUploadAltText('');

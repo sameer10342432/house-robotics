@@ -12,13 +12,13 @@ if (file_exists($customConfigFile)) {
 // Auto-detect environment variables if present
 $dbHost = !empty(getenv('DB_HOST')) ? getenv('DB_HOST') : 'localhost';
 $dbPort = (int)(!empty(getenv('DB_PORT')) ? getenv('DB_PORT') : 3306);
-$dbName = !empty(getenv('DB_NAME')) ? getenv('DB_NAME') : 'muhamma1_robotic';
-$dbUser = !empty(getenv('DB_USER')) ? getenv('DB_USER') : 'muhamma1_robotic';
+$dbName = !empty(getenv('DB_NAME')) ? getenv('DB_NAME') : 'muhamma1_houserobotics';
+$dbUser = !empty(getenv('DB_USER')) ? getenv('DB_USER') : 'muhamma1_houserobotics';
 $dbPass = !empty(getenv('DB_PASSWORD')) ? getenv('DB_PASSWORD') : '####Sameer1234567890';
 
 $driver = getenv('DB_DRIVER') ?: 'mysql';
 // If local dev environment without MySQL connection specified, allow sqlite fallback for testing
-$sqlitePath = __DIR__ . '/../database/dev.sqlite';
+$sqlitePath = getenv('DB_SQLITE_PATH') ?: (__DIR__ . '/../database/dev.sqlite');
 
 return [
     'db' => [

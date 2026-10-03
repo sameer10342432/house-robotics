@@ -19,9 +19,19 @@ import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { BlogPage } from './pages/BlogPage';
 import { ServiceDetailPage } from './pages/ServiceDetailPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { AdminLayout } from './admin/AdminLayout';
 import { AGENCY_INFO } from './data/agencyData';
+import { applyPageSeo } from './utils/seo';
 import { MessageSquare, ArrowUp, X, Sparkles } from 'lucide-react';
+
+const RESTORED_BLOG_SLUGS = [
+  'how-much-does-seo-cost-in-the-uk',
+  'what-is-seo-and-why-does-your-business-need-it',
+  'seo-vs-ppc-which-is-better-for-your-business',
+  'how-google-business-profile-helps-local-businesses',
+  'how-to-improve-your-google-rankings-in-2026'
+];
 
 const getPageFromPath = (pathname: string): PageView => {
   const clean = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
@@ -36,7 +46,7 @@ const getPageFromPath = (pathname: string): PageView => {
   if (clean === 'ai-automation' || clean === 'marketing-automation') return 'ai-automation';
   if (clean === 'web-development' || clean === 'custom-web-development') return 'web-development';
   if (clean === 'contact') return 'contact';
-  if (clean === 'blog' || clean.startsWith('blog/')) return 'blog';
+  if (clean === 'blog' || clean.startsWith('blog/') || RESTORED_BLOG_SLUGS.includes(clean)) return 'blog';
   if (clean === 'wordpress' || clean === 'wordpress-development') return 'wordpress';
   if (clean === 'shopify' || clean === 'shopify-development') return 'shopify';
   if (clean === 'ecommerce' || clean === 'ecommerce-development') return 'ecommerce';
@@ -48,7 +58,8 @@ const getPageFromPath = (pathname: string): PageView => {
   if (clean === 'branding' || clean === 'branding-graphic-design') return 'branding';
   if (clean === 'video-marketing') return 'video-marketing';
   if (clean === 'online-reputation' || clean === 'online-reputation-management') return 'online-reputation';
-  return 'home';
+  if (clean === '404' || clean === 'not-found') return 'not-found';
+  return 'not-found';
 };
 
 export default function App() {
@@ -63,6 +74,12 @@ export default function App() {
   const [consultationService, setConsultationService] = useState<string>('SEO');
   const [selectedBlogArticle, setSelectedBlogArticle] = useState<BlogPost | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    if (currentPage !== 'admin' && currentPage !== 'blog') {
+      applyPageSeo(currentPage === 'home' ? '/' : `/${currentPage}`);
+    }
+  }, [currentPage]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -85,7 +102,7 @@ export default function App() {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (typeof window !== 'undefined') {
-      const targetUrl = page === 'home' ? '/' : `/${page}`;
+      const targetUrl = page === 'home' ? '/' : page === 'not-found' ? '/404' : `/${page}`;
       if (window.location.pathname !== targetUrl) {
         window.history.pushState({}, '', targetUrl);
       }
@@ -232,6 +249,10 @@ export default function App() {
             onNavigate={handleNavigate}
             onOpenConsultation={handleOpenConsultation}
           />
+        )}
+
+        {currentPage === 'not-found' && (
+          <NotFoundPage onNavigate={handleNavigate} />
         )}
       </motion.main>
     </AnimatePresence>

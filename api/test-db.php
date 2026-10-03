@@ -13,8 +13,8 @@ $dbCfg = $config['db'] ?? [];
 
 $host     = $dbCfg['host'] ?? 'localhost';
 $port     = (int)($dbCfg['port'] ?? 3306);
-$database = $dbCfg['database'] ?? 'muhamma1_robotic';
-$username = $dbCfg['username'] ?? 'muhamma1_robotic';
+$database = $dbCfg['database'] ?? 'muhamma1_houserobotics';
+$username = $dbCfg['username'] ?? 'muhamma1_houserobotics';
 $password = $dbCfg['password'] ?? '####Sameer1234567890';
 
 $message = '';
@@ -24,8 +24,8 @@ $actionStatus = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_config') {
     $testHost = trim($_POST['db_host'] ?? 'localhost');
     $testPort = (int)($_POST['db_port'] ?? 3306);
-    $testDb   = trim($_POST['db_name'] ?? 'muhamma1_robotic');
-    $testUser = trim($_POST['db_user'] ?? 'muhamma1_robotic');
+    $testDb   = trim($_POST['db_name'] ?? 'muhamma1_houserobotics');
+    $testUser = trim($_POST['db_user'] ?? 'muhamma1_houserobotics');
     $testPass = trim($_POST['db_pass'] ?? '');
 
     $testDsns = [

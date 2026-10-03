@@ -1,0 +1,22 @@
+# =====================================================================
+# HOUSE ROBOTICS — Production Robots.txt Directives
+# Canonical Website: https://houserobotics.online/
+# =====================================================================
+
+User-agent: *
+Allow: /
+
+# Disallow internal administrative & sensitive infrastructure
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/admin/
+Disallow: /config/
+Disallow: /includes/
+Disallow: /database/
+Disallow: /scratch/
+
+# Disallow 404 page
+Disallow: /404
+
+# XML Sitemap
+Sitemap: https://houserobotics.online/sitemap.xml

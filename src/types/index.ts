@@ -21,7 +21,8 @@ export type PageView =
   | 'online-reputation'
   | 'contact'
   | 'blog'
-  | 'admin';
+  | 'admin'
+  | 'not-found';
 
 export interface ServiceItem {
   id: string;
@@ -52,13 +53,22 @@ export interface CaseStudy {
 export interface BlogPost {
   id: string;
   title: string;
+  slug?: string;
   category: 'SEO' | 'AI' | 'Digital Marketing' | 'Web Development' | 'Paid Advertising';
   excerpt: string;
   readTime: string;
   date: string;
   author: string;
-  content: string[];
+  authorRole?: string;
+  content: string[] | string;
   image?: string;
+  featuredImage?: string;
+  featuredImageAlt?: string;
+  featuredImageCaption?: string;
+  seoTitle?: string;
+  metaDescription?: string;
+  focusKeyword?: string;
+  canonicalUrl?: string;
 }
 
 export interface Testimonial {

@@ -42,13 +42,17 @@ class Database {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
             self::$instance->exec("PRAGMA foreign_keys = ON;");
+            if (!self::$schemaChecked) {
+                self::ensureSchema();
+                self::$schemaChecked = true;
+            }
             return self::$instance;
         }
 
         // MySQL / MariaDB Connection Parameters
-        $primaryUser = !empty($dbConfig['username']) ? $dbConfig['username'] : 'muhamma1_robotic';
+        $primaryUser = !empty($dbConfig['username']) ? $dbConfig['username'] : 'muhamma1_houserobotics';
         $primaryPass = !empty($dbConfig['password']) ? $dbConfig['password'] : '####Sameer1234567890';
-        $dbname      = !empty($dbConfig['database']) ? $dbConfig['database'] : 'muhamma1_robotic';
+        $dbname      = !empty($dbConfig['database']) ? $dbConfig['database'] : 'muhamma1_houserobotics';
         $host        = !empty($dbConfig['host']) ? $dbConfig['host'] : 'localhost';
         $port        = (int)(!empty($dbConfig['port']) ? $dbConfig['port'] : 3306);
         $charset     = $dbConfig['charset'] ?? 'utf8mb4';
@@ -58,10 +62,67 @@ class Database {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
             PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset} COLLATE utf8mb4_unicode_ci",
-            PDO::ATTR_TIMEOUT            => 4
+            PDO::ATTR_TIMEOUT            => 2
         ];
 
-        // Candidate Passwords (supports with or without '####' prefix, plus admin password variations)
+        // 1. Direct attempt with primary configuration
+        $primaryDsn = "mysql:host={$host};port={$port};dbname={$dbname};charset={$charset}";
+        try {
+            self::$instance = new PDO($primaryDsn, $primaryUser, $primaryPass, $options);
+            if (!self::$schemaChecked) {
+                self::ensureSchema();
+                self::$schemaChecked = true;
+            }
+            return self::$instance;
+        } catch (PDOException $primaryEx) {
+            $lastException = $primaryEx;
+        }
+
+        // 2. If Host Unreachable (Error 2002), try Unix sockets on Linux / cPanel
+        $is2002 = str_contains($lastException->getMessage(), '2002');
+        if ($is2002) {
+            $potentialSockets = array_filter(array_unique([
+                ini_get('pdo_mysql.default_socket'),
+                ini_get('mysqli.default_socket'),
+                ini_get('mysql.default_socket'),
+                '/var/lib/mysql/mysql.sock',
+                '/tmp/mysql.sock'
+            ]));
+
+            foreach ($potentialSockets as $sock) {
+                if (!empty($sock) && @file_exists($sock)) {
+                    $sockDsn = "mysql:unix_socket={$sock};dbname={$dbname};charset={$charset}";
+                    try {
+                        self::$instance = new PDO($sockDsn, $primaryUser, $primaryPass, $options);
+                        if (!self::$schemaChecked) {
+                            self::ensureSchema();
+                            self::$schemaChecked = true;
+                        }
+                        return self::$instance;
+                    } catch (PDOException $e) {
+                        $lastException = $e;
+                    }
+                }
+            }
+
+            // Local development fallback to SQLite if MySQL service is not running locally
+            if (!empty($dbConfig['sqlite_path']) && file_exists($dbConfig['sqlite_path'])) {
+                self::$instance = new PDO("sqlite:" . $dbConfig['sqlite_path'], null, null, [
+                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                ]);
+                self::$instance->exec("PRAGMA foreign_keys = ON;");
+                if (!self::$schemaChecked) {
+                    self::ensureSchema();
+                    self::$schemaChecked = true;
+                }
+                return self::$instance;
+            }
+
+            throw new Exception("MySQL Server unreachable on {$host}:{$port} (Error 2002). Verify MySQL service is active in cPanel.");
+        }
+
+        // 3. If MySQL responded with Error 1045 (Auth) or Error 1049 (Unknown DB), try focused candidate matrix
         $passwords = array_values(array_unique(array_filter([
             $primaryPass,
             ltrim($primaryPass, '#'),
@@ -69,61 +130,36 @@ class Database {
             '####Sameer1234567890',
             'Sameer1234567890',
             'Y&VO{(w0J3A6}',
-            'Y&VO{(w0J3A6',
-            '#Sameer1234567890',
-            '##Sameer1234567890',
-            '###Sameer1234567890'
+            'Y&VO{(w0J3A6'
         ])));
 
-        // Candidate Usernames (supports exact name, cPanel account user, and prefixes)
         $usernames = array_values(array_unique(array_filter([
             $primaryUser,
-            'muhamma1_robotic',
-            'muhamma1_prettypuff',
             'muhamma1_houserobotics',
-            'muhamma1',
-            substr($primaryUser, 0, 16)
+            'muhamma1_robotic'
         ])));
 
-        // Primary Host Candidates (localhost and 127.0.0.1)
-        $dsnTemplates = [
-            "mysql:host=localhost;dbname={$dbname};charset={$charset}",
-            "mysql:host=127.0.0.1;port={$port};dbname={$dbname};charset={$charset}",
-            "mysql:host={$host};port={$port};dbname={$dbname};charset={$charset}",
-        ];
+        $dbnames = array_values(array_unique(array_filter([
+            $dbname,
+            'muhamma1_houserobotics',
+            'muhamma1_robotic'
+        ])));
 
-        // Only add Unix Sockets if the socket file actually exists on this server (prevents false 2002 errors)
-        $potentialSockets = array_filter(array_unique([
-            ini_get('pdo_mysql.default_socket'),
-            ini_get('mysqli.default_socket'),
-            ini_get('mysql.default_socket'),
-            '/var/lib/mysql/mysql.sock',
-            '/tmp/mysql.sock'
-        ]));
-
-        foreach ($potentialSockets as $sock) {
-            if (!empty($sock) && @file_exists($sock)) {
-                $dsnTemplates[] = "mysql:unix_socket={$sock};dbname={$dbname};charset={$charset}";
-            }
-        }
-
-        $lastException = null;
         $authException = null;
         $connected = false;
         $workingConfig = null;
 
-        // Multi-attempt connection matrix
         foreach ($usernames as $u) {
             foreach ($passwords as $p) {
-                foreach ($dsnTemplates as $dsn) {
+                foreach ($dbnames as $dbn) {
+                    $candDsn = "mysql:host={$host};port={$port};dbname={$dbn};charset={$charset}";
                     try {
-                        self::$instance = new PDO($dsn, $u, $p, $options);
+                        self::$instance = new PDO($candDsn, $u, $p, $options);
                         $connected = true;
-                        $workingConfig = ['dsn' => $dsn, 'user' => $u, 'pass' => $p];
-                        break 3; // Connection established!
+                        $workingConfig = ['dsn' => $candDsn, 'user' => $u, 'pass' => $p, 'database' => $dbn];
+                        break 3;
                     } catch (PDOException $e) {
                         $lastException = $e;
-                        // Prioritize Error 1045/1049 (which proves MySQL server is active and reachable)
                         if (str_contains($e->getMessage(), '1045') || str_contains($e->getMessage(), '1049')) {
                             $authException = $e;
                         }
@@ -133,16 +169,14 @@ class Database {
         }
 
         if ($connected && self::$instance !== null && $workingConfig !== null) {
-            // Cache successful config to config.local.php if writable so subsequent calls connect instantly
             $localCfg = __DIR__ . '/../config/config.local.php';
             if (!file_exists($localCfg) && is_writable(__DIR__ . '/../config')) {
-                $content = "<?php\n// Auto-generated working database connection\nreturn [\n    'db' => [\n        'driver' => 'mysql',\n        'host' => 'localhost',\n        'port' => {$port},\n        'database' => " . var_export($dbname, true) . ",\n        'username' => " . var_export($workingConfig['user'], true) . ",\n        'password' => " . var_export($workingConfig['pass'], true) . ",\n        'charset' => 'utf8mb4',\n        'collation' => 'utf8mb4_unicode_ci',\n        'options' => [\n            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,\n            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,\n            PDO::ATTR_EMULATE_PREPARES => false,\n        ],\n    ]\n];\n";
+                $content = "<?php\n// Auto-generated working database connection\nreturn [\n    'db' => [\n        'driver' => 'mysql',\n        'host' => 'localhost',\n        'port' => {$port},\n        'database' => " . var_export($workingConfig['database'], true) . ",\n        'username' => " . var_export($workingConfig['user'], true) . ",\n        'password' => " . var_export($workingConfig['pass'], true) . ",\n        'charset' => 'utf8mb4',\n        'collation' => 'utf8mb4_unicode_ci',\n        'options' => [\n            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,\n            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,\n            PDO::ATTR_EMULATE_PREPARES => false,\n        ],\n    ]\n];\n";
                 @file_put_contents($localCfg, $content);
             }
         }
 
         if (!$connected || self::$instance === null) {
-            // Local dev fallback to SQLite if present
             if (!empty($dbConfig['sqlite_path']) && file_exists($dbConfig['sqlite_path'])) {
                 self::$instance = new PDO("sqlite:" . $dbConfig['sqlite_path'], null, null, [
                     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -152,13 +186,12 @@ class Database {
                 return self::$instance;
             }
 
-            // Prefer authException if MySQL responded with Access Denied or DB Not Found
             $finalException = $authException ?: $lastException;
             $errMsg = $finalException ? $finalException->getMessage() : 'Unknown database error';
             error_log("[Database Connection Error] " . $errMsg);
 
             if (str_contains($errMsg, '1045')) {
-                throw new Exception("Database Access Denied (Error 1045) for user '{$primaryUser}'. In cPanel under 'MySQL Databases' -> 'Current Users', click 'Change Password' and ensure the password matches, and ensure user is assigned to database '{$dbname}' with 'ALL PRIVILEGES'.");
+                throw new Exception("Database Access Denied (Error 1045) for user '{$primaryUser}'. In cPanel under 'MySQL Databases' -> 'Current Users', verify user privileges and password.");
             } elseif (str_contains($errMsg, '1049')) {
                 throw new Exception("Database '{$dbname}' not found (Error 1049). In cPanel under 'MySQL Databases', verify that database '{$dbname}' exists.");
             } elseif (str_contains($errMsg, '2002')) {
@@ -182,9 +215,20 @@ class Database {
      */
     public static function query(string $sql, array $params = []): PDOStatement {
         $pdo = self::getInstance();
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt;
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt;
+        } catch (PDOException $e) {
+            // Auto-heal missing tables (Error 1146 / SQLSTATE 42S02) and retry
+            if (str_contains($e->getMessage(), '1146') || str_contains($e->getMessage(), '42S02')) {
+                self::ensureSchema(true);
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                return $stmt;
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -236,9 +280,16 @@ class Database {
     /**
      * Auto-heal & verify schema:
      * 1. If admin_users table does not exist, create it and seed super admin immediately
-     * 2. Ensure tracking fields in leads and contact_messages
+     * 2. Ensure media and CMS tables exist
+     * 3. Ensure tracking fields in leads and contact_messages
      */
-    public static function ensureSchema(): void {
+    public static function ensureSchema(bool $force = false): void {
+        static $hasRun = false;
+        if ($hasRun && !$force) {
+            return;
+        }
+        $hasRun = true;
+
         try {
             $pdo = self::$instance;
             if (!$pdo) {
@@ -247,7 +298,33 @@ class Database {
             $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 
             if ($driver === 'mysql') {
-                // Check if admin_users table exists
+                // 1. Ensure media table exists with exact production schema
+                $mediaCheck = $pdo->query("SHOW TABLES LIKE 'media'")->fetchAll();
+                if (empty($mediaCheck)) {
+                    $pdo->exec("
+                        CREATE TABLE IF NOT EXISTS `media` (
+                          `id` varchar(36) NOT NULL,
+                          `filename` varchar(255) NOT NULL,
+                          `original_name` varchar(255) NOT NULL,
+                          `mime_type` varchar(100) NOT NULL,
+                          `size` int(11) NOT NULL,
+                          `url` varchar(255) NOT NULL,
+                          `alt_text` varchar(255) DEFAULT NULL,
+                          `title` varchar(255) DEFAULT NULL,
+                          `caption` text DEFAULT NULL,
+                          `description` text DEFAULT NULL,
+                          `width` int(11) DEFAULT NULL,
+                          `height` int(11) DEFAULT NULL,
+                          `uploaded_by` varchar(150) DEFAULT NULL,
+                          `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                          PRIMARY KEY (`id`),
+                          KEY `idx_media_created` (`created_at`),
+                          KEY `idx_media_filename` (`filename`)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                    ");
+                }
+
+                // 2. Check if admin_users table exists
                 $tableCheck = $pdo->query("SHOW TABLES LIKE 'admin_users'")->fetchAll();
                 if (empty($tableCheck)) {
                     $pdo->exec("
@@ -273,6 +350,28 @@ class Database {
                     $hash = password_hash('Y&VO{(w0J3A6}', PASSWORD_BCRYPT, ['cost' => 12]);
                     $stmt = $pdo->prepare("INSERT IGNORE INTO `admin_users` (`id`, `name`, `email`, `password_hash`, `role`, `is_active`) VALUES (?, ?, ?, ?, 'SUPER_ADMIN', 1)");
                     $stmt->execute([$adminId, 'Sameer Liaqat', 'sameerliaqat81@gmail.com', $hash]);
+                }
+
+                // 3. If other essential tables like blog_posts are missing, attempt import from database.sql
+                $blogCheck = $pdo->query("SHOW TABLES LIKE 'blog_posts'")->fetchAll();
+                if (empty($blogCheck)) {
+                    $sqlFiles = [__DIR__ . '/../database.sql', __DIR__ . '/../database/database.sql'];
+                    foreach ($sqlFiles as $file) {
+                        if (file_exists($file)) {
+                            $sql = file_get_contents($file);
+                            if ($sql) {
+                                // Execute raw statements
+                                try {
+                                    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
+                                    $pdo->exec($sql);
+                                    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
+                                } catch (Throwable $ignore) {
+                                    // continue
+                                }
+                            }
+                            break;
+                        }
+                    }
                 }
 
                 // If leads table exists, ensure tracking columns
@@ -309,6 +408,26 @@ class Database {
                         if (!in_array($col, $msgCols, true)) {
                             $pdo->exec("ALTER TABLE `contact_messages` ADD COLUMN `{$col}` {$type}");
                         }
+                    }
+                }
+            } elseif ($driver === 'sqlite') {
+                // Check contact_messages columns
+                $colsInfo = $pdo->query("PRAGMA table_info('contact_messages')")->fetchAll(PDO::FETCH_ASSOC);
+                $existingCols = array_column($colsInfo, 'name');
+                $needed = ['page_url', 'referrer', 'ip_address', 'user_agent'];
+                foreach ($needed as $col) {
+                    if (!in_array($col, $existingCols, true)) {
+                        $pdo->exec("ALTER TABLE contact_messages ADD COLUMN {$col} TEXT");
+                    }
+                }
+
+                // Check leads columns
+                $leadColsInfo = $pdo->query("PRAGMA table_info('leads')")->fetchAll(PDO::FETCH_ASSOC);
+                $existingLeadCols = array_column($leadColsInfo, 'name');
+                $leadNeeded = ['page_url', 'referrer', 'ip_address', 'user_agent', 'utm_source', 'utm_medium', 'utm_campaign'];
+                foreach ($leadNeeded as $col) {
+                    if (!in_array($col, $existingLeadCols, true)) {
+                        $pdo->exec("ALTER TABLE leads ADD COLUMN {$col} TEXT");
                     }
                 }
             }

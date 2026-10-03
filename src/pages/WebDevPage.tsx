@@ -1,5 +1,5 @@
 import React from 'react';
-import { Code, ArrowRight, Laptop, ShoppingBag, Layers, Zap, Shield, Sparkles, CheckCircle2, Gauge, Smartphone, GitBranch } from 'lucide-react';
+import { Code, ArrowRight, Laptop, ShoppingBag, Layers, Zap, Shield, Sparkles, CheckCircle2, Gauge, Smartphone, GitBranch, ChevronRight } from 'lucide-react';
 import { BrowserMockupVisual } from '../components/BrowserMockupVisual';
 import { SpeedOptimizationVisual, CodeArchitectureVisual, EcommerceProductVisual } from '../components/WebDevVisualSections';
 import { CTASection } from '../components/CTASection';
@@ -22,6 +22,15 @@ export const WebDevPage: React.FC<WebDevPageProps> = ({ onNavigate, onOpenConsul
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-6 space-y-6">
+              {/* Visual Breadcrumb Navigation */}
+              <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold mb-2">
+                <span onClick={() => onNavigate('home')} className="hover:text-neutral-900 cursor-pointer">Home</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span onClick={() => onNavigate('services')} className="hover:text-neutral-900 cursor-pointer">Services</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span className="text-[#6D28D9]">Web Development</span>
+              </div>
+
               <ScrollReveal direction="fade-up" delay={50}>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F3F0FF] text-[#6D28D9] text-xs font-bold border border-violet-100">
                   <Code className="w-3.5 h-3.5" /> High-Performance Full-Stack Engineering

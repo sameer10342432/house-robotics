@@ -126,6 +126,15 @@ export const ServiceDetailPage: React.FC<ServiceDetailPageProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left: Text & CTA (50-60%) */}
             <div className="lg:col-span-6 space-y-6">
+              {/* Visual Breadcrumb Navigation */}
+              <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold mb-2">
+                <span onClick={() => onNavigate('home')} className="hover:text-neutral-900 cursor-pointer">Home</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span onClick={() => onNavigate('services')} className="hover:text-neutral-900 cursor-pointer">Services</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span className="text-[#6D28D9]">{service.title}</span>
+              </div>
+
               <ScrollReveal direction="fade-up" delay={50}>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F3F0FF] text-[#6D28D9] text-xs font-bold border border-violet-100 shadow-xs">
                   <Sparkles className="w-3.5 h-3.5" />
@@ -259,6 +268,58 @@ export const ServiceDetailPage: React.FC<ServiceDetailPageProps> = ({
                   </div>
                 </div>
               </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Related Services Internal Linking Section */}
+      <section className="py-16 bg-[#FAF9FF] border-t border-[#E9E7F2]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold text-[#6D28D9] uppercase tracking-wider">Synergistic Capabilities</div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Space_Grotesk'] mt-1">
+                Complementary Growth Services
+              </h2>
+            </div>
+            <button
+              onClick={() => onNavigate('services')}
+              className="text-xs font-bold text-[#6D28D9] hover:underline flex items-center gap-1 self-start sm:self-auto"
+            >
+              <span>View All 22 Capabilities</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {SERVICES_LIST.filter(s => s.slug !== serviceSlug).slice(0, 3).map((rel, idx) => (
+              <div
+                key={idx}
+                onClick={() => onNavigate(rel.slug as PageView)}
+                className="agency-card p-6 rounded-2xl bg-white border border-[#E9E7F2] hover:border-violet-300 transition-all cursor-pointer group flex flex-col justify-between shadow-xs hover:shadow-md"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3 text-xs text-neutral-400">
+                    <span className="font-bold text-[#6D28D9] bg-violet-50 px-2 py-0.5 rounded-md">
+                      {rel.category}
+                    </span>
+                    <span className="font-mono text-[11px] text-emerald-600 font-bold">
+                      {rel.metrics.label}: {rel.metrics.value}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-neutral-900 group-hover:text-[#6D28D9] transition-colors">
+                    {rel.title}
+                  </h3>
+                  <p className="text-xs text-neutral-600 mt-2 line-clamp-2 leading-relaxed">
+                    {rel.shortDesc}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-bold text-[#6D28D9]">
+                  <span>Explore Architecture</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
             ))}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, 
   Search, 
@@ -38,6 +38,7 @@ import {
   BLOG_POSTS, 
   AGENCY_INFO 
 } from '../data/agencyData';
+import { fetchBlogPosts } from '../utils/api';
 import { HeroVisual } from '../components/HeroVisual';
 import { SEOVisual } from '../components/SEOVisual';
 import { AIWorkflowVisual } from '../components/AIWorkflowVisual';
@@ -65,6 +66,25 @@ export const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const [selectedCaseStudy, setSelectedCaseStudy] = useState<CaseStudy>(CASE_STUDIES[0]);
   const [activeOutcomeFilter, setActiveOutcomeFilter] = useState<string>('all');
+  const [posts, setPosts] = useState<any[]>(BLOG_POSTS);
+
+  useEffect(() => {
+    fetchBlogPosts({ limit: 4 })
+      .then(res => {
+        if (res && Array.isArray(res) && res.length > 0) {
+          const normalized = res.map((p: any) => ({
+            ...p,
+            category: p.category?.name || p.category || 'Strategy',
+            image: p.featuredImage || p.featured_image || p.image || null,
+            featuredImage: p.featuredImage || p.featured_image || p.image || null,
+            readTime: p.readTime || p.read_time || '5 min read',
+            excerpt: p.excerpt || p.content?.slice(0, 120) || ''
+          }));
+          setPosts(normalized);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const getServiceIcon = (iconName: string) => {
     switch (iconName) {
@@ -114,9 +134,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               </motion.div>
 
               <motion.h1 variants={heroItemVariant} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-neutral-950 tracking-tight leading-[1.08] font-['Space_Grotesk']">
-                Smart Digital Solutions.{' '}
+                Digital Marketing &amp; Technology for{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6D28D9] via-[#7C3AED] to-[#2563EB]">
-                  Powerful Business Growth.
+                  Scalable Business Growth
                 </span>
               </motion.h1>
 
@@ -220,7 +240,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 { title: 'Social Media', slug: 'social-media', icon: Share2 },
                 { title: 'AI Automation', slug: 'ai-automation', icon: Cpu },
                 { title: 'Web Development', slug: 'web-development', icon: Code },
-                { title: 'E-commerce', slug: 'web-development', icon: ShoppingBag },
+                { title: 'E-commerce', slug: 'ecommerce', icon: ShoppingBag },
               ].map((cat) => {
                 const Icon = cat.icon;
                 return (
@@ -946,15 +966,15 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {BLOG_POSTS.map((post, idx) => (
-              <ScrollReveal key={post.id} animation="fade-up" delay={(idx % 4) * 80}>
+            {posts.slice(0, 4).map((post, idx) => (
+              <ScrollReveal key={post.id || idx} animation="fade-up" delay={(idx % 4) * 80}>
                 <div
                   onClick={() => onOpenBlog(post)}
                   className="agency-card bg-white rounded-3xl border border-[#E9E7F2] shadow-xs overflow-hidden flex flex-col justify-between cursor-pointer group hover:border-[#6D28D9] h-full"
                 >
                   <div className="p-3 bg-[#FAF9FF]/60 border-b border-[#E9E7F2] overflow-hidden">
                     <div className="transition-transform duration-500 group-hover:scale-103">
-                      <BlogCardVisual category={post.category} title={post.title} image={post.image} />
+                      <BlogCardVisual category={post.category} title={post.title} image={post.image || post.featuredImage || post.featured_image} />
                     </div>
                   </div>
 

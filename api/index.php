@@ -9,6 +9,30 @@ error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 
+// Buffer output to prevent accidental header corruption
+ob_start();
+
+// Guarantee JSON output on fatal PHP shutdowns
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        if (ob_get_length()) {
+            ob_clean();
+        }
+        if (!headers_sent()) {
+            http_response_code(500);
+            header('Content-Type: application/json; charset=UTF-8');
+            header('X-Content-Type-Options: nosniff');
+        }
+        echo json_encode([
+            'success' => false,
+            'message' => 'Internal Server Error: An unexpected fatal error occurred.',
+            'error'   => $error['message']
+        ], JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+});
+
 // Set default timezone
 date_default_timezone_set('UTC');
 
@@ -137,6 +161,23 @@ try {
     // -------------------------------------------------------------------------
     // 3. Public Blog API
     // -------------------------------------------------------------------------
+    $formatPostRecord = function(array &$p): void {
+        $img = $p['featured_image'] ?? $p['featuredImage'] ?? null;
+        $p['featuredImage'] = $img;
+        $p['featured_image'] = $img;
+        $p['image'] = $img;
+        $p['featuredImageAlt'] = $p['featured_image_alt'] ?? $p['featuredImageAlt'] ?? '';
+        $p['featured_image_alt'] = $p['featuredImageAlt'];
+        $p['featuredImageCaption'] = $p['featured_image_caption'] ?? $p['featuredImageCaption'] ?? '';
+        $p['featured_image_caption'] = $p['featuredImageCaption'];
+        $p['readTime'] = $p['read_time'] ?? $p['readTime'] ?? '5 min read';
+        $p['read_time'] = $p['readTime'];
+        $p['publishedAt'] = $p['published_at'] ?? $p['publishedAt'] ?? $p['created_at'] ?? null;
+        $p['published_at'] = $p['publishedAt'];
+        $p['createdAt'] = $p['created_at'] ?? null;
+        $p['updatedAt'] = $p['updated_at'] ?? null;
+    };
+
     if ($path === '/blog/categories' && $method === 'GET') {
         // GET /api/blog/categories
         $categories = Database::fetchAll(
@@ -194,6 +235,7 @@ try {
         $posts = Database::fetchAll($dataSql, $params);
 
         foreach ($posts as &$post) {
+            $formatPostRecord($post);
             $post['category'] = !empty($post['category_id']) ? [
                 'id'   => $post['category_id'],
                 'name' => $post['category_name'] ?? 'General',
@@ -228,6 +270,8 @@ try {
 
         // Increment view count
         Database::execute("UPDATE blog_posts SET views = views + 1 WHERE id = ?", [$post['id']]);
+
+        $formatPostRecord($post);
 
         $post['category'] = !empty($post['category_id']) ? [
             'id'   => $post['category_id'],
@@ -1192,6 +1236,7 @@ try {
         );
 
         foreach ($posts as &$post) {
+            $formatPostRecord($post);
             $post['category'] = !empty($post['category_id']) ? [
                 'id'   => $post['category_id'],
                 'name' => $post['category_name'] ?? 'General',
@@ -1233,6 +1278,8 @@ try {
             Response::notFound('Article not found.');
         }
 
+        $formatPostRecord($post);
+
         $post['category'] = !empty($post['category_id']) ? [
             'id'   => $post['category_id'],
             'name' => $post['category_name'] ?? 'General',
@@ -1253,6 +1300,18 @@ try {
         );
 
         Response::success($post);
+    }
+
+    // Blog Post Revisions: GET /api/admin/blog/:id/revisions
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'blog' && isset($segments[2], $segments[3]) && $segments[3] === 'revisions' && $method === 'GET') {
+        Auth::requireAuth();
+        $postId = $segments[2];
+        $revisions = Database::fetchAll(
+            "SELECT id, post_id as postId, title, content, excerpt, author, created_at as createdAt 
+             FROM blog_revisions WHERE post_id = ? ORDER BY created_at DESC LIMIT 20",
+            [$postId]
+        );
+        Response::success($revisions);
     }
 
     // Create Blog Post: POST /api/admin/blog
@@ -1567,7 +1626,13 @@ try {
             'metadata'  => ['count' => count($results)]
         ]);
 
-        Response::success(count($results) === 1 ? $results[0] : $results, 'Upload successful', 201);
+        $payloadData = count($results) === 1 ? $results[0] : $results;
+        $firstItem = count($results) === 1 ? $results[0] : ($results[0] ?? null);
+        $extraPayload = [
+            'media' => $payloadData,
+            'url'   => $firstItem ? $firstItem['url'] : null,
+        ];
+        Response::success($payloadData, 'Image uploaded successfully', 201, $extraPayload);
     }
 
     // Update Media Metadata: PUT /api/admin/media/:id

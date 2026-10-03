@@ -194,6 +194,9 @@ export const HeroVisual: React.FC = () => {
                 alt="House Robotics digital marketing and technology growth visual"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 loading="eager"
+                fetchPriority="high"
+                width={640}
+                height={400}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent pointer-events-none" />
               <div className="absolute top-2 right-2 bg-neutral-900/90 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-lg flex items-center gap-1.5">

@@ -1,18 +1,21 @@
 async function runTests() {
-  const base = 'http://localhost:5000/api';
+  const base = 'http://127.0.0.1:8080/api';
   console.log('Testing House Robotics Blog CMS Endpoints...');
 
   // 1. Admin login
   const loginRes = await fetch(`${base}/admin/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@houserobotics.com', password: 'HouseRobotics2026!' })
+    body: JSON.stringify({ email: 'sameerliaqat81@gmail.com', password: 'Y&VO{(w0J3A6}' })
   });
   const loginData = await loginRes.json();
-  console.log('1. Admin Login:', loginData.success ? 'PASSED' : 'FAILED', loginData.user?.email);
-  const token = loginData.data.token;
+  const rawCookie = loginRes.headers.get('set-cookie') || '';
+  const sessionCookie = rawCookie.split(';')[0];
+  console.log('1. Admin Login:', loginData.success ? 'PASSED' : 'FAILED', loginData.data?.user?.email);
+  const token = loginData.data?.token;
   const authHeaders = {
     'Content-Type': 'application/json',
+    'Cookie': sessionCookie,
     'Authorization': `Bearer ${token}`
   };
 

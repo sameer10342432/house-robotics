@@ -1,51 +1,114 @@
-# ==============================================================
-# House Robotics — Production cPanel / Apache Configuration
-# SPA Client-Side Routing, Security, Compression & Caching
-# ==============================================================
+# =====================================================================
+# HOUSE ROBOTICS — Production Apache .htaccess Configuration
+# Full-Service Digital Marketing & Technology Agency
+# Compatible with cPanel Shared Hosting & Apache 2.4+
+# =====================================================================
+
+# 1. Security Options & Disable Directory Listing
+Options -Indexes -MultiViews
+ServerSignature Off
+
+# 2. Block Access to Sensitive Files and Directories
+<FilesMatch "(?i)(\.env|\.git|\.yml|\.yaml|\.lock|package\.json|tsconfig\.json|vite\.config\.ts|database\.sql|\.sqlite|\.log|\.md)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
 
 <IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
+    RewriteEngine On
+    RewriteBase /
 
-  # Allow HTTP Authorization Header for JWT Bearer Tokens
-  RewriteCond %{HTTP:Authorization} .
-  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    # Block direct web access to sensitive internal backend folders
+    RewriteRule ^(config|includes|database|node_modules|server|src|scratch)(/.*)?$ - [F,L,NC]
 
-  # If requested resource exists as physical file or directory, serve directly
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
+    # Force HTTPS redirection (standard cPanel SSL)
+    RewriteCond %{HTTPS} off [OR]
+    RewriteCond %{HTTP:X-Forwarded-Proto} =http
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-  # SPA Rewrite: Route all non-file requests to index.html
-  RewriteRule ^ index.html [L]
+    # 3. 301 Permanent Redirects for URL Aliases & Legacy URLs
+    # 3a. Redirect /blog/ version of restored articles to their canonical root URLs
+    RewriteRule ^blog/(how-much-does-seo-cost-in-the-uk|what-is-seo-and-why-does-your-business-need-it|seo-vs-ppc-which-is-better-for-your-business|how-google-business-profile-helps-local-businesses|how-to-improve-your-google-rankings-in-2026)/?$ /$1/ [R=301,L,NC]
+
+    # 3b. Service URL Aliases (Consolidate Link Equity & Avoid Cannibalization)
+    RewriteRule ^google-maps-ranking/?$ /local-seo [R=301,L,NC]
+    RewriteRule ^social-media-marketing/?$ /social-media [R=301,L,NC]
+    RewriteRule ^meta-ads/?$ /social-media [R=301,L,NC]
+    RewriteRule ^ppc-google-ads/?$ /ppc [R=301,L,NC]
+    RewriteRule ^marketing-automation/?$ /ai-automation [R=301,L,NC]
+    RewriteRule ^custom-web-development/?$ /web-development [R=301,L,NC]
+    RewriteRule ^wordpress-development/?$ /wordpress [R=301,L,NC]
+    RewriteRule ^shopify-development/?$ /shopify [R=301,L,NC]
+    RewriteRule ^ecommerce-development/?$ /ecommerce [R=301,L,NC]
+    RewriteRule ^conversion-rate-optimization/?$ /cro [R=301,L,NC]
+    RewriteRule ^analytics-reporting/?$ /analytics [R=301,L,NC]
+    RewriteRule ^branding-graphic-design/?$ /branding [R=301,L,NC]
+    RewriteRule ^online-reputation-management/?$ /online-reputation [R=301,L,NC]
+
+    # 3c. Legacy / Obsolete URL redirects to relevant active pages or homepage
+    RewriteRule ^category(/.*)?$ /blog [R=301,L,NC]
+    RewriteRule ^tag(/.*)?$ /blog [R=301,L,NC]
+    RewriteRule ^author(/.*)?$ /about [R=301,L,NC]
+    RewriteRule ^feed(/.*)?$ /blog [R=301,L,NC]
+    RewriteRule ^rss(/.*)?$ /blog [R=301,L,NC]
+    RewriteRule ^digital-marketing/?$ /services [R=301,L,NC]
+    RewriteRule ^marketing/?$ /services [R=301,L,NC]
+    RewriteRule ^pricing/?$ /contact [R=301,L,NC]
+    RewriteRule ^quote/?$ /contact [R=301,L,NC]
+    RewriteRule ^consultation/?$ /contact [R=301,L,NC]
+    RewriteRule ^case-studies/?$ /services [R=301,L,NC]
+    RewriteRule ^portfolio/?$ /services [R=301,L,NC]
+    RewriteRule ^privacy(-policy)?/?$ / [R=301,L,NC]
+    RewriteRule ^terms(-of-service)?/?$ / [R=301,L,NC]
+
+    # 3d. Explicit 200 SPA route for the 5 Restored Articles (Guarantees HTTP 200, Never 404 or redirect)
+    RewriteRule ^(how-much-does-seo-cost-in-the-uk|what-is-seo-and-why-does-your-business-need-it|seo-vs-ppc-which-is-better-for-your-business|how-google-business-profile-helps-local-businesses|how-to-improve-your-google-rankings-in-2026)/?$ index.html [L,QSA]
+
+    # 4. Dynamic XML Sitemap and Robots.txt (Fallback if static file does not exist)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^sitemap\.xml$ sitemap.php [L,QSA]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^robots\.txt$ robots.php [L,QSA]
+
+    # 4. PHP REST API Routing
+    # Ensure /api/ requests are routed to api/index.php and NEVER to index.html
+    RewriteRule ^api/(.*)$ api/index.php [L,QSA]
+    RewriteRule ^api/?$ api/index.php [L,QSA]
+
+    # 5. Static Assets and Existing Files/Directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 6. React Single Page Application (SPA) Catch-All
+    # Send only frontend client routes to index.html. NEVER route /api, /uploads, or PHP scripts to index.html
+    RewriteCond %{REQUEST_URI} !^/api [NC]
+    RewriteCond %{REQUEST_URI} !^/uploads [NC]
+    RewriteCond %{REQUEST_URI} !\.php$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.html [L]
 </IfModule>
 
-# Security: Prevent directory listing
-Options -Indexes
-
-# Security Headers
-<IfModule mod_headers.c>
-  Header always set X-Content-Type-Options "nosniff"
-  Header always set X-Frame-Options "SAMEORIGIN"
-  Header always set X-XSS-Protection "1; mode=block"
-  Header always set Referrer-Policy "strict-origin-when-cross-origin"
-</IfModule>
-
-# Gzip / Deflate Compression
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json image/svg+xml
-</IfModule>
-
-# Browser Caching Headers
+# 7. Browser Caching for Performance
 <IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresDefault "access plus 2 days"
-  ExpiresByType image/webp "access plus 1 year"
-  ExpiresByType image/svg+xml "access plus 1 year"
-  ExpiresByType image/png "access plus 1 year"
-  ExpiresByType image/jpeg "access plus 1 year"
-  ExpiresByType image/x-icon "access plus 1 year"
-  ExpiresByType text/css "access plus 1 month"
-  ExpiresByType application/javascript "access plus 1 month"
-  ExpiresByType text/html "access plus 0 seconds"
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+    ExpiresByType text/html "access plus 0 seconds"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType application/pdf "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# 8. Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>

@@ -15,8 +15,10 @@ interface BlogCardVisualProps {
 }
 
 export const BlogCardVisual: React.FC<BlogCardVisualProps> = ({ category, title, image }) => {
-  // If an image is provided, display high-resolution cover image with styled metadata
-  if (image) {
+  const [imageError, setImageError] = React.useState(false);
+
+  // If a valid image is provided and hasn't errored, display cover image
+  if (image && !imageError) {
     return (
       <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-[#E9E7F2] bg-[#0A071B] group shadow-inner">
         <img
@@ -24,6 +26,7 @@ export const BlogCardVisual: React.FC<BlogCardVisualProps> = ({ category, title,
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           referrerPolicy="no-referrer"
+          onError={() => setImageError(true)}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
         

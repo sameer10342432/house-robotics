@@ -340,16 +340,17 @@ const BlogViewInner: React.FC = () => {
         title: formData.featuredImageTitle || formData.title || file.name.replace(/\.[^/.]+$/, ''),
         caption: formData.featuredImageCaption || ''
       });
-      if (res.success && res.data) {
+      if (res.success && (res.data || res.url)) {
+        const imgUrl = res.url || (res.data as any)?.url;
         setFormData(prev => ({
           ...prev,
-          featuredImage: (res.data as any).url,
-          featuredImageAlt: prev.featuredImageAlt || (res.data as any).altText || '',
-          featuredImageTitle: prev.featuredImageTitle || (res.data as any).title || ''
+          featuredImage: imgUrl,
+          featuredImageAlt: prev.featuredImageAlt || (res.data as any)?.altText || '',
+          featuredImageTitle: prev.featuredImageTitle || (res.data as any)?.title || ''
         }));
         setSaveMessage('Featured image uploaded successfully!');
         setTimeout(() => setSaveMessage(null), 3000);
-      } else { setUploadError((res as any).message || 'Upload failed.'); }
+      } else { setUploadError(res.message || 'Upload failed.'); }
     } catch (err: any) { setUploadError(err.message || 'Upload failed.'); }
     finally {
       setIsUploadingFeatured(false);

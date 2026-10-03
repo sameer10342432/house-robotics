@@ -1,5 +1,15 @@
-<FilesMatch "(?i)\.(php|php3|php4|php5|phtml|phar|pl|py|jsp|asp|htm|html|shtml|sh|cgi)$">
+# =====================================================================
+# HOUSE ROBOTICS — Uploads Directory Apache .htaccess Configuration
+# Protects uploads directory by prohibiting execution of executable scripts
+# =====================================================================
+
+Options -Indexes -ExecCGI
+
+<FilesMatch "(?i)\.(php|php3|php4|php5|php7|php8|phtml|phar|pl|py|jsp|asp|htm|html|shtml|sh|cgi|bash)$">
     Order Deny,Allow
     Deny from all
 </FilesMatch>
-Options -Indexes -ExecCGI
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

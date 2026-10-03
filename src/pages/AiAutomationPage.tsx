@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, ArrowRight, Zap, Bot, Database, Mail, Users, CheckCircle2, Sparkles, Sliders } from 'lucide-react';
+import { Cpu, ArrowRight, Zap, Bot, Database, Mail, Users, CheckCircle2, Sparkles, Sliders, ChevronRight } from 'lucide-react';
 import { AIWorkflowVisual } from '../components/AIWorkflowVisual';
 import { LeadToCalendarWorkflow, SupportCopilotWorkflow } from '../components/WorkflowBlueprintVisual';
 import { CTASection } from '../components/CTASection';
@@ -30,6 +30,15 @@ export const AiAutomationPage: React.FC<AiAutomationPageProps> = ({ onNavigate, 
               animate="visible"
               className="lg:col-span-6 space-y-6 text-left"
             >
+              {/* Visual Breadcrumb Navigation */}
+              <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold mb-2">
+                <span onClick={() => onNavigate('home')} className="hover:text-neutral-900 cursor-pointer">Home</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span onClick={() => onNavigate('services')} className="hover:text-neutral-900 cursor-pointer">Services</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span className="text-[#6D28D9]">AI & Marketing Automation</span>
+              </div>
+
               <motion.div variants={heroItemVariant} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F3F0FF] text-[#6D28D9] text-xs font-bold border border-violet-100 shadow-xs">
                 <Cpu className="w-3.5 h-3.5 animate-pulse" />
                 <span>Intelligent Agentic Pipelines</span>

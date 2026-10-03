@@ -26,17 +26,53 @@ ServerSignature Off
     RewriteCond %{HTTP:X-Forwarded-Proto} =http
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # 3. Dynamic XML Sitemap and Robots.txt
+    # 3. 301 Permanent Redirects for URL Aliases & Legacy URLs
+    # 3a. Redirect /blog/ version of restored articles to their canonical root URLs
+    RewriteRule ^blog/(how-much-does-seo-cost-in-the-uk|what-is-seo-and-why-does-your-business-need-it|seo-vs-ppc-which-is-better-for-your-business|how-google-business-profile-helps-local-businesses|how-to-improve-your-google-rankings-in-2026)/?$ /$1/ [R=301,L,NC]
+
+    # 3b. Service URL Aliases (Consolidate Link Equity & Avoid Cannibalization)
+    RewriteRule ^google-maps-ranking/?$ /local-seo [R=301,L,NC]
+    RewriteRule ^social-media-marketing/?$ /social-media [R=301,L,NC]
+    RewriteRule ^meta-ads/?$ /social-media [R=301,L,NC]
+    RewriteRule ^ppc-google-ads/?$ /ppc [R=301,L,NC]
+    RewriteRule ^marketing-automation/?$ /ai-automation [R=301,L,NC]
+    RewriteRule ^custom-web-development/?$ /web-development [R=301,L,NC]
+    RewriteRule ^wordpress-development/?$ /wordpress [R=301,L,NC]
+    RewriteRule ^shopify-development/?$ /shopify [R=301,L,NC]
+    RewriteRule ^ecommerce-development/?$ /ecommerce [R=301,L,NC]
+    RewriteRule ^conversion-rate-optimization/?$ /cro [R=301,L,NC]
+    RewriteRule ^analytics-reporting/?$ /analytics [R=301,L,NC]
+    RewriteRule ^branding-graphic-design/?$ /branding [R=301,L,NC]
+    RewriteRule ^online-reputation-management/?$ /online-reputation [R=301,L,NC]
+
+    # 3c. Legacy / Obsolete URL redirects to relevant active pages or homepage
+    RewriteRule ^category(/.*)?$ /blog [R=301,L,NC]
+    RewriteRule ^tag(/.*)?$ /blog [R=301,L,NC]
+    RewriteRule ^author(/.*)?$ /about [R=301,L,NC]
+    RewriteRule ^feed(/.*)?$ /blog [R=301,L,NC]
+    RewriteRule ^rss(/.*)?$ /blog [R=301,L,NC]
+    RewriteRule ^digital-marketing/?$ /services [R=301,L,NC]
+    RewriteRule ^marketing/?$ /services [R=301,L,NC]
+    RewriteRule ^pricing/?$ /contact [R=301,L,NC]
+    RewriteRule ^quote/?$ /contact [R=301,L,NC]
+    RewriteRule ^consultation/?$ /contact [R=301,L,NC]
+    RewriteRule ^case-studies/?$ /services [R=301,L,NC]
+    RewriteRule ^portfolio/?$ /services [R=301,L,NC]
+    RewriteRule ^privacy(-policy)?/?$ / [R=301,L,NC]
+    RewriteRule ^terms(-of-service)?/?$ / [R=301,L,NC]
+
+    # 3d. Explicit 200 SPA route for the 5 Restored Articles (Guarantees HTTP 200, Never 404 or redirect)
+    RewriteRule ^(how-much-does-seo-cost-in-the-uk|what-is-seo-and-why-does-your-business-need-it|seo-vs-ppc-which-is-better-for-your-business|how-google-business-profile-helps-local-businesses|how-to-improve-your-google-rankings-in-2026)/?$ index.html [L,QSA]
+
+    # 4. Dynamic XML Sitemap and Robots.txt (Fallback if static file does not exist)
+    RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^sitemap\.xml$ sitemap.php [L,QSA]
+    RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^robots\.txt$ robots.php [L,QSA]
 
     # 4. PHP REST API Routing
     # Ensure /api/ requests are routed to api/index.php and NEVER to index.html
-    RewriteCond %{REQUEST_URI} ^/api/ [NC]
-    RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^api/(.*)$ api/index.php [L,QSA]
-
-    # If direct request to /api or /api/
     RewriteRule ^api/?$ api/index.php [L,QSA]
 
     # 5. Static Assets and Existing Files/Directories
@@ -45,7 +81,12 @@ ServerSignature Off
     RewriteRule ^ - [L]
 
     # 6. React Single Page Application (SPA) Catch-All
-    # Send all other frontend routes (/about, /services, /admin, etc.) to index.html
+    # Send only frontend client routes to index.html. NEVER route /api, /uploads, or PHP scripts to index.html
+    RewriteCond %{REQUEST_URI} !^/api [NC]
+    RewriteCond %{REQUEST_URI} !^/uploads [NC]
+    RewriteCond %{REQUEST_URI} !\.php$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^ index.html [L]
 </IfModule>
 

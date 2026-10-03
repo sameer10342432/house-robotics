@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, ArrowRight, Star, CheckCircle2, Navigation, Phone, ShieldCheck, Sparkles, Building, Globe } from 'lucide-react';
+import { MapPin, ArrowRight, Star, CheckCircle2, Navigation, Phone, ShieldCheck, Sparkles, Building, Globe, ChevronRight } from 'lucide-react';
 import { LocalMapVisual } from '../components/LocalMapVisual';
 import { 
   GbpProfileCard, 
@@ -36,6 +36,15 @@ export const LocalSeoPage: React.FC<LocalSeoPageProps> = ({ onNavigate, onOpenCo
               animate="visible"
               className="lg:col-span-6 space-y-6 text-left"
             >
+              {/* Visual Breadcrumb Navigation */}
+              <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold mb-2">
+                <span onClick={() => onNavigate('home')} className="hover:text-neutral-900 cursor-pointer">Home</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span onClick={() => onNavigate('services')} className="hover:text-neutral-900 cursor-pointer">Services</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
+                <span className="text-[#6D28D9]">Local SEO & Google Maps</span>
+              </div>
+
               <motion.div variants={heroItemVariant} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F3F0FF] text-[#6D28D9] text-xs font-bold border border-violet-100 shadow-xs">
                 <MapPin className="w-3.5 h-3.5 animate-pulse" />
                 <span>Geo-Targeted Search Dominance</span>

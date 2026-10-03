@@ -26,6 +26,8 @@ import { ImageWithFallback } from '../components/ImageWithFallback';
 import { AnimatePresence, motion } from 'motion/react';
 import { heroContainerVariant, heroItemVariant, smoothEasing } from '../utils/animations';
 
+import { applyPageSeo } from '../utils/seo';
+
 interface BlogPageProps {
   onNavigate: (page: PageView) => void;
   onOpenConsultation: () => void;
@@ -39,9 +41,72 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
 
+  const RESTORED_BLOG_SLUGS = [
+    'how-much-does-seo-cost-in-the-uk',
+    'what-is-seo-and-why-does-your-business-need-it',
+    'seo-vs-ppc-which-is-better-for-your-business',
+    'how-google-business-profile-helps-local-businesses',
+    'how-to-improve-your-google-rankings-in-2026'
+  ];
+
   useEffect(() => {
     loadPublicBlogData();
+    checkUrlSlug(BLOG_POSTS);
   }, []);
+
+  const checkUrlSlug = (availablePosts: any[]) => {
+    if (typeof window === 'undefined') return;
+    const clean = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    const parts = clean.split('/');
+    let targetSlug = '';
+    let isRootSlug = false;
+
+    if (parts[0] === 'blog' && parts[1]) {
+      targetSlug = parts[1];
+    } else if (parts[0] && parts[0] !== 'blog') {
+      targetSlug = parts[0];
+      isRootSlug = true;
+    }
+
+    if (targetSlug) {
+      const found = availablePosts.find(p => p.slug === targetSlug || p.id === targetSlug);
+      if (found) {
+        openArticle(found, false, isRootSlug || RESTORED_BLOG_SLUGS.includes(targetSlug));
+        return;
+      }
+    }
+    applyPageSeo('/blog');
+  };
+
+  const openArticle = (article: any, updateHistory = true, forceRootUrl = false) => {
+    setActiveArticle(article);
+    const slug = article.slug || article.id;
+    const isRoot = forceRootUrl || RESTORED_BLOG_SLUGS.includes(slug) || (article.canonicalUrl && !article.canonicalUrl.includes('/blog/'));
+    const targetPath = isRoot ? `/${slug}/` : `/blog/${slug}`;
+    const canonical = article.canonicalUrl || `https://houserobotics.online${targetPath}`;
+
+    if (updateHistory && typeof window !== 'undefined') {
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({}, '', targetPath);
+      }
+    }
+    applyPageSeo(targetPath, {
+      seoTitle: article.seoTitle || `${article.title.substring(0, 44)} | House Robotics`,
+      metaDescription: article.metaDescription || (article.excerpt?.substring(0, 155)),
+      focusKeyword: article.focusKeyword,
+      canonicalUrl: canonical,
+      ogImage: article.featuredImage || article.image || 'https://houserobotics.online/assets/blog-page-hero.webp',
+      twitterImage: article.featuredImage || article.image || 'https://houserobotics.online/assets/blog-page-hero.webp'
+    });
+  };
+
+  const closeArticle = () => {
+    setActiveArticle(null);
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', '/blog');
+    }
+    applyPageSeo('/blog');
+  };
 
   const loadPublicBlogData = async () => {
     try {
@@ -52,13 +117,21 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
 
       if (postsRes && Array.isArray(postsRes) && postsRes.length > 0) {
         // Normalize DB posts to match Blog structure
-        const normalized = postsRes.map((p: any) => ({
-          ...p,
-          category: p.category?.name || p.category || 'Strategy',
-          image: p.featuredImage || '/assets/blog-ai-search.webp',
-          date: p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently'
-        }));
+        const normalized = postsRes.map((p: any) => {
+          const img = p.featuredImage || p.featured_image || p.image || null;
+          return {
+            ...p,
+            category: p.category?.name || p.category || 'Strategy',
+            image: img,
+            featuredImage: img,
+            featuredImageAlt: p.featuredImageAlt || p.featured_image_alt || p.title || '',
+            featuredImageCaption: p.featuredImageCaption || p.featured_image_caption || '',
+            readTime: p.readTime || p.read_time || '5 min read',
+            date: p.publishedAt || p.published_at ? new Date(p.publishedAt || p.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently'
+          };
+        });
         setPosts(normalized);
+        checkUrlSlug(normalized);
       }
 
       if (catsRes && catsRes.success && Array.isArray(catsRes.data) && catsRes.data.length > 0) {
@@ -78,8 +151,17 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
     return matchCat && matchSearch;
   });
 
+  const getArticleUrl = (article: any) => {
+    const slug = article.slug || article.id;
+    if (RESTORED_BLOG_SLUGS.includes(slug) || (article.canonicalUrl && !article.canonicalUrl.includes('/blog/'))) {
+      return `https://houserobotics.online/${slug}/`;
+    }
+    return `https://houserobotics.online/blog/${slug}`;
+  };
+
   const handleShare = (platform: string, article: any) => {
-    const url = encodeURIComponent(window.location.origin + '/blog/' + article.slug);
+    const articleUrl = getArticleUrl(article);
+    const url = encodeURIComponent(articleUrl);
     const text = encodeURIComponent(article.title);
 
     let shareUrl = '';
@@ -92,37 +174,41 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
   };
 
   const handleCopyLink = (slug: string) => {
-    navigator.clipboard?.writeText(window.location.origin + '/blog/' + slug);
+    const isRoot = RESTORED_BLOG_SLUGS.includes(slug);
+    const fullUrl = isRoot ? `https://houserobotics.online/${slug}/` : `https://houserobotics.online/blog/${slug}`;
+    navigator.clipboard?.writeText(fullUrl);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
   // Structured Data Schema generator
   const getArticleSchema = (article: any) => {
+    const articleUrl = article.canonicalUrl || getArticleUrl(article);
     return JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Article',
       headline: article.seoTitle || article.title,
       description: article.metaDescription || article.excerpt,
-      image: article.featuredImage || article.image,
+      image: article.featuredImage || article.image || 'https://houserobotics.online/assets/blog-page-hero.webp',
       author: {
-        '@type': 'Person',
+        '@type': 'Organization',
         name: article.author || 'House Robotics Strategy Team',
-        jobTitle: article.authorRole || 'Lead Agency Strategist'
+        url: 'https://houserobotics.online'
       },
       publisher: {
         '@type': 'Organization',
         name: 'House Robotics',
+        url: 'https://houserobotics.online',
         logo: {
           '@type': 'ImageObject',
-          url: 'https://houserobotics.com/logo.png'
+          url: 'https://houserobotics.online/favicon.svg'
         }
       },
-      datePublished: article.publishedAt || article.createdAt || new Date().toISOString(),
-      dateModified: article.updatedAt || new Date().toISOString(),
+      datePublished: article.publishedAt || article.createdAt || '2026-03-01T10:00:00Z',
+      dateModified: article.updatedAt || '2026-03-24T12:00:00Z',
       mainEntityOfPage: {
         '@type': 'WebPage',
-        '@id': `https://houserobotics.com/blog/${article.slug}`
+        '@id': articleUrl
       }
     });
   };
@@ -194,7 +280,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
 
           {/* Featured Article Console */}
           <div className="pt-4">
-            <BlogHeroVisual onSelectPost={(p) => setActiveArticle(p)} />
+            <BlogHeroVisual onSelectPost={(p) => openArticle(p)} />
           </div>
         </div>
       </section>
@@ -242,7 +328,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
                 delay={(idx % 3) * 80}
               >
                 <div
-                  onClick={() => setActiveArticle(post)}
+                  onClick={() => openArticle(post)}
                   className="agency-card overflow-hidden flex flex-col justify-between cursor-pointer group h-full"
                 >
                   <div className="p-3 bg-[#FAF9FF]/60 border-b border-[#E9E7F2]">
@@ -296,7 +382,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22, ease: smoothEasing }}
             className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-900/70 backdrop-blur-md"
-            onClick={() => setActiveArticle(null)}
+            onClick={closeArticle}
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.96, y: 14 }}
@@ -317,9 +403,9 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
                 <div className="space-y-3 text-left">
                   {/* Breadcrumbs */}
                   <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold">
-                    <span className="hover:text-neutral-900 cursor-pointer">Home</span>
+                    <span onClick={() => { closeArticle(); onNavigate('home'); }} className="hover:text-neutral-900 cursor-pointer">Home</span>
                     <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
-                    <span className="hover:text-neutral-900 cursor-pointer">Blog</span>
+                    <span onClick={closeArticle} className="hover:text-neutral-900 cursor-pointer">Blog</span>
                     <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />
                     <span className="text-[#6D28D9]">
                       {typeof activeArticle.category === 'object' ? activeArticle.category?.name : activeArticle.category}
@@ -342,7 +428,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
                 </div>
 
                 <button
-                  onClick={() => setActiveArticle(null)}
+                  onClick={closeArticle}
                   className="w-9 h-9 rounded-full bg-white border border-[#E9E7F2] text-neutral-500 hover:text-neutral-900 flex items-center justify-center shrink-0 transition-colors shadow-xs"
                   aria-label="Close article"
                 >
@@ -393,7 +479,9 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onNavigate, onOpenConsultati
                   {typeof activeArticle.content === 'string' ? (
                     <div dangerouslySetInnerHTML={{ __html: activeArticle.content }} />
                   ) : Array.isArray(activeArticle.content) ? (
-                    activeArticle.content.map((p: string, i: number) => <p key={i}>{p}</p>)
+                    activeArticle.content.map((p: string, i: number) => (
+                      <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
+                    ))
                   ) : null}
                 </div>
 
