@@ -223,6 +223,22 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button
+            onClick={() => onNavigate('usa')}
+            className={`relative py-1 hover:text-[#6D28D9] transition-colors ${
+              currentPage === 'usa' ? 'text-[#6D28D9] font-bold' : ''
+            }`}
+          >
+            USA Markets
+            {currentPage === 'usa' && (
+              <motion.span 
+                layoutId="navbar-indicator"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#6D28D9] rounded-full" 
+                transition={{ duration: 0.25, ease: smoothEasing }}
+              />
+            )}
+          </button>
+
+          <button
             onClick={() => onNavigate('contact')}
             className={`relative py-1 hover:text-[#6D28D9] transition-colors ${
               currentPage === 'contact' ? 'text-[#6D28D9] font-bold' : ''
@@ -319,6 +335,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="w-full text-left py-2 hover:text-[#6D28D9] border-b border-neutral-100 transition-colors"
               >
                 Insights & Blog
+              </button>
+              <button
+                onClick={() => { onNavigate('usa'); setMobileMenuOpen(false); }}
+                className="w-full text-left py-2 hover:text-[#6D28D9] border-b border-neutral-100 transition-colors"
+              >
+                USA Target Markets
               </button>
               <button
                 onClick={() => { onNavigate('contact'); setMobileMenuOpen(false); }}

@@ -14,10 +14,11 @@ router.get('/sitemap.xml', async (req: Request, res: Response): Promise<void> =>
       { path: '/services', priority: '0.9', changefreq: 'weekly' },
       { path: '/about', priority: '0.8', changefreq: 'monthly' },
       { path: '/contact', priority: '0.8', changefreq: 'monthly' },
-      { path: '/blog', priority: '0.8', changefreq: 'daily' }
+      { path: '/blog', priority: '0.8', changefreq: 'daily' },
+      { path: '/usa', priority: '0.9', changefreq: 'weekly' }
     ];
 
-    const [services, blogPosts] = await Promise.all([
+    const [services, blogPosts, states, locationPages] = await Promise.all([
       prisma.service.findMany({
         where: { status: 'PUBLISHED', noIndex: false },
         select: { slug: true, updatedAt: true }
@@ -25,6 +26,14 @@ router.get('/sitemap.xml', async (req: Request, res: Response): Promise<void> =>
       prisma.blogPost.findMany({
         where: { status: 'PUBLISHED', noIndex: false },
         select: { slug: true, updatedAt: true, publishedAt: true }
+      }),
+      prisma.usaState.findMany({
+        where: { status: 'PUBLISHED' },
+        select: { slug: true, updatedAt: true }
+      }),
+      prisma.usaLocationPage.findMany({
+        where: { status: 'PUBLISHED', noIndex: false },
+        select: { urlPath: true, updatedAt: true, canonicalUrl: true }
       })
     ]);
 
@@ -57,6 +66,27 @@ router.get('/sitemap.xml', async (req: Request, res: Response): Promise<void> =>
       xml += `    <lastmod>${(post.publishedAt || post.updatedAt).toISOString().split('T')[0]}</lastmod>\n`;
       xml += `    <changefreq>monthly</changefreq>\n`;
       xml += `    <priority>0.7</priority>\n`;
+      xml += `  </url>\n`;
+    }
+
+    // Dynamic published USA states
+    for (const st of states) {
+      xml += `  <url>\n`;
+      xml += `    <loc>${baseUrl}/usa/${st.slug}</loc>\n`;
+      xml += `    <lastmod>${st.updatedAt.toISOString().split('T')[0]}</lastmod>\n`;
+      xml += `    <changefreq>weekly</changefreq>\n`;
+      xml += `    <priority>0.8</priority>\n`;
+      xml += `  </url>\n`;
+    }
+
+    // Dynamic published USA location landing pages
+    for (const lp of locationPages) {
+      const loc = lp.canonicalUrl || `${baseUrl}${lp.urlPath}`;
+      xml += `  <url>\n`;
+      xml += `    <loc>${loc}</loc>\n`;
+      xml += `    <lastmod>${lp.updatedAt.toISOString().split('T')[0]}</lastmod>\n`;
+      xml += `    <changefreq>weekly</changefreq>\n`;
+      xml += `    <priority>0.85</priority>\n`;
       xml += `  </url>\n`;
     }
 

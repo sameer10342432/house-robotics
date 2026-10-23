@@ -208,6 +208,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenConsultation }
                   </button>
                 </li>
                 <li>
+                  <button onClick={() => onNavigate('usa')} className="hover:text-[#6D28D9] transition-all hover:translate-x-0.5 font-semibold text-neutral-800">
+                    USA Target Markets
+                  </button>
+                </li>
+                <li>
                   <button onClick={() => onNavigate('contact')} className="hover:text-[#6D28D9] transition-all hover:translate-x-0.5">
                     Direct Contact Desk
                   </button>

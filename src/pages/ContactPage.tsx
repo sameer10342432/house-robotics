@@ -22,7 +22,7 @@ import { DecorativeBackground } from '../components/DecorativeBackground';
 import { ImageWithFallback } from '../components/ImageWithFallback';
 import { motion, AnimatePresence } from 'motion/react';
 import { smoothEasing } from '../utils/animations';
-import { submitContact, trackEvent } from '../utils/api';
+import { submitContact, apiTrackEvent } from '../utils/api';
 
 export const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -30,16 +30,53 @@ export const ContactPage: React.FC = () => {
     email: '',
     phone: '',
     company: '',
+    websiteUrl: '',
+    location: '',
     service: 'SEO',
     budget: '$2,500 - $5,000 / mo',
-    message: ''
+    timeline: 'Within 2-4 weeks',
+    serviceDetails: '',
+    message: '',
+    consentGiven: true,
+    hp_field: ''
   });
 
+  const [formRenderTime, setFormRenderTime] = useState<number>(Date.now());
+  const [hasStartedTyping, setHasStartedTyping] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [inquiryRef, setInquiryRef] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  React.useEffect(() => {
+    setFormRenderTime(Date.now());
+    apiTrackEvent('contact_form_view', { form: 'Contact Page' });
+  }, []);
+
+  const handleInputFocus = () => {
+    if (!hasStartedTyping) {
+      setHasStartedTyping(true);
+      apiTrackEvent('form_start', { form: 'Contact Page', service: formData.service });
+    }
+  };
+
+  const getServiceQuestionLabel = (service: string) => {
+    const s = service.toLowerCase();
+    if (s.includes('seo')) {
+      return 'What is your primary SEO target? (e.g. Local ranking, Core Web Vitals, organic ARR)';
+    }
+    if (s.includes('web') || s.includes('develop')) {
+      return 'Target website or application type? (e.g. React Web App, Corporate Redesign, Client Portal)';
+    }
+    if (s.includes('ai') || s.includes('automation')) {
+      return 'What workflow or tool do you want to automate? (e.g. Inbound lead qualification, Zapier/Make CRM sync)';
+    }
+    if (s.includes('commerce') || s.includes('shopify')) {
+      return 'Target e-commerce platform & approximate SKU count? (e.g. Shopify 500 SKUs, Custom WooCommerce)';
+    }
+    return 'Specific technical requirements or goals for this service';
+  };
 
   const faqs = [
     {
@@ -64,11 +101,16 @@ export const ContactPage: React.FC = () => {
     const errs: Record<string, string> = {};
     if (!formData.name.trim()) errs.name = 'Please provide your full name';
     if (!formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email)) {
-      errs.email = 'Please provide a valid business email';
+      errs.email = 'Please provide a valid business email address';
     }
-    if (!formData.phone.trim()) errs.phone = 'Please provide a contact phone or WhatsApp number';
+    if (!formData.company.trim()) {
+      errs.company = 'Please provide your company or organization name';
+    }
     if (!formData.message.trim() || formData.message.length < 10) {
       errs.message = 'Please provide a brief outline of your goals (min 10 characters)';
+    }
+    if (!formData.consentGiven) {
+      errs.consent = 'Please confirm consent for project review communications';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -79,31 +121,64 @@ export const ContactPage: React.FC = () => {
     if (!validate()) return;
 
     setIsSubmitting(true);
+    setErrors({});
+
     try {
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+
       const res = await submitContact({
-        ...formData,
-        source: 'Contact Form'
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        company: formData.company,
+        websiteUrl: formData.websiteUrl || undefined,
+        city: formData.location ? formData.location.split(',')[0]?.trim() : undefined,
+        state: formData.location && formData.location.includes(',') ? formData.location.split(',')[1]?.trim() : undefined,
+        service: formData.service,
+        budget: formData.budget,
+        timeline: formData.timeline,
+        message: formData.message,
+        serviceDetails: formData.serviceDetails ? { specificNeeds: formData.serviceDetails } : undefined,
+        consentGiven: formData.consentGiven,
+        hp_field: formData.hp_field,
+        formRenderTime,
+        source: 'Contact Form',
+        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+        referrer: typeof document !== 'undefined' ? document.referrer : undefined,
+        utmSource: urlParams?.get('utm_source') || undefined,
+        utmMedium: urlParams?.get('utm_medium') || undefined,
+        utmCampaign: urlParams?.get('utm_campaign') || undefined,
+        utmContent: urlParams?.get('utm_content') || undefined,
+        utmTerm: urlParams?.get('utm_term') || undefined
       });
 
       if (res.success && res.data?.inquiryId) {
         setInquiryRef(res.data.inquiryId);
+        setIsSubmitted(true);
+        apiTrackEvent('valid_submission', {
+          form: 'Contact Page',
+          service: formData.service,
+          inquiryId: res.data.inquiryId
+        });
+
+        try {
+          confetti({
+            particleCount: 90,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#6D28D9', '#2563EB', '#06B6D4', '#FACC15']
+          });
+        } catch {
+          // Fallback gracefully
+        }
+      } else {
+        setErrors({ server: res.message || 'Submission failed. Please message us directly on WhatsApp.' });
       }
-      trackEvent('FORM_SUBMIT', 'Contact Form Submitted', { service: formData.service });
-    } catch (err) {
-      console.warn('[CONTACT] Fallback submission triggered', err);
+    } catch (err: any) {
+      console.warn('[CONTACT] Submission issue:', err);
+      setErrors({ server: err?.message || 'Network connectivity error. Your details are saved. Please retry or message on WhatsApp.' });
     } finally {
       setIsSubmitting(false);
-      setIsSubmitted(true);
-      try {
-        confetti({
-          particleCount: 90,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#6D28D9', '#2563EB', '#06B6D4', '#FACC15']
-        });
-      } catch (e) {
-        // Fallback gracefully
-      }
     }
   };
 
@@ -256,17 +331,37 @@ export const ContactPage: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="border-b border-[#E9E7F2] pb-4 mb-2">
-                      <h3 className="text-xl font-bold text-neutral-900">
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Honeypot field (hidden from real users) */}
+                    <div style={{ display: 'none', position: 'absolute', left: '-9999px' }} aria-hidden="true">
+                      <input
+                        type="text"
+                        name="hp_field"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={formData.hp_field}
+                        onChange={(e) => setFormData({ ...formData, hp_field: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="border-b border-[#E9E7F2] pb-3 mb-2">
+                      <h3 className="text-xl font-bold text-neutral-900 font-['Space_Grotesk']">
                         Send Us Your Project Brief
                       </h3>
-                      <p className="text-xs text-neutral-500 mt-1">
-                        Fill out the details below to receive a custom proposal and growth timeline.
+                      <p className="text-xs text-neutral-500 mt-0.5">
+                        Fill out the details below to receive a custom proposal, technical audit, and growth timeline.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {errors.server && (
+                      <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                        <span>{errors.server}</span>
+                      </div>
+                    )}
+
+                    {/* Row 1: Name and Email */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div>
                         <label className="block text-xs font-bold text-neutral-700 mb-1">
                           Full Name *
@@ -274,8 +369,9 @@ export const ContactPage: React.FC = () => {
                         <input
                           type="text"
                           value={formData.name}
+                          onFocus={handleInputFocus}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="Alex Morgan"
+                          placeholder="e.g. Alex Morgan"
                           className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-neutral-900 focus:outline-none transition-colors ${
                             errors.name ? 'border-red-400 bg-red-50/20' : 'border-[#E9E7F2] bg-white focus:border-[#6D28D9]'
                           }`}
@@ -285,11 +381,12 @@ export const ContactPage: React.FC = () => {
 
                       <div>
                         <label className="block text-xs font-bold text-neutral-700 mb-1">
-                          Work Email *
+                          Business Email *
                         </label>
                         <input
                           type="email"
                           value={formData.email}
+                          onFocus={handleInputFocus}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           placeholder="alex@company.com"
                           className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-neutral-900 focus:outline-none transition-colors ${
@@ -300,46 +397,81 @@ export const ContactPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Row 2: Company and Phone */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div>
                         <label className="block text-xs font-bold text-neutral-700 mb-1">
-                          Phone / WhatsApp *
-                        </label>
-                        <input
-                          type="tel"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="+1 (555) 000-0000"
-                          className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-neutral-900 focus:outline-none transition-colors ${
-                            errors.phone ? 'border-red-400 bg-red-50/20' : 'border-[#E9E7F2] bg-white focus:border-[#6D28D9]'
-                          }`}
-                        />
-                        {errors.phone && <p className="text-[11px] text-red-500 mt-1">{errors.phone}</p>}
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1">
-                          Company Name / URL
+                          Company Name *
                         </label>
                         <input
                           type="text"
                           value={formData.company}
+                          onFocus={handleInputFocus}
                           onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                          placeholder="Company or website URL"
+                          placeholder="e.g. Apex Software LLC"
+                          className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-neutral-900 focus:outline-none transition-colors ${
+                            errors.company ? 'border-red-400 bg-red-50/20' : 'border-[#E9E7F2] bg-white focus:border-[#6D28D9]'
+                          }`}
+                        />
+                        {errors.company && <p className="text-[11px] text-red-500 mt-1">{errors.company}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-neutral-700 mb-1">
+                          Phone / WhatsApp <span className="text-neutral-400 font-normal">(Optional)</span>
+                        </label>
+                        <input
+                          type="tel"
+                          value={formData.phone}
+                          onFocus={handleInputFocus}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="+1 (555) 000-0000"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9E7F2] bg-white text-xs text-neutral-900 focus:border-[#6D28D9] focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Row 3: Website URL and Location */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div>
                         <label className="block text-xs font-bold text-neutral-700 mb-1">
-                          Primary Service
+                          Current Website URL <span className="text-neutral-400 font-normal">(Optional)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.websiteUrl}
+                          onFocus={handleInputFocus}
+                          onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                          placeholder="https://example.com"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9E7F2] bg-white text-xs text-neutral-900 focus:border-[#6D28D9] focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-neutral-700 mb-1">
+                          Business Location <span className="text-neutral-400 font-normal">(City, State)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.location}
+                          onFocus={handleInputFocus}
+                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                          placeholder="e.g. Austin, TX or USA"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9E7F2] bg-white text-xs text-neutral-900 focus:border-[#6D28D9] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row 4: Service, Budget, and Timeline */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      <div>
+                        <label className="block text-xs font-bold text-neutral-700 mb-1">
+                          Primary Service *
                         </label>
                         <select
                           value={formData.service}
                           onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9E7F2] bg-white text-xs text-neutral-900 focus:border-[#6D28D9] focus:outline-none"
+                          className="w-full px-3 py-2.5 rounded-xl border border-[#E9E7F2] bg-white text-xs text-neutral-900 focus:border-[#6D28D9] focus:outline-none"
                         >
                           {CORE_CAPABILITIES.map((cap) => (
                             <option key={cap} value={cap}>
@@ -351,29 +483,63 @@ export const ContactPage: React.FC = () => {
 
                       <div>
                         <label className="block text-xs font-bold text-neutral-700 mb-1">
-                          Project Budget
+                          Project Budget <span className="text-neutral-400 font-normal">(Optional)</span>
                         </label>
                         <select
                           value={formData.budget}
                           onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9E7F2] bg-white text-xs text-neutral-900 focus:border-[#6D28D9] focus:outline-none"
+                          className="w-full px-3 py-2.5 rounded-xl border border-[#E9E7F2] bg-white text-xs text-neutral-900 focus:border-[#6D28D9] focus:outline-none"
                         >
                           <option value="$1,000 - $2,500 / mo">$1,000 - $2,500 / mo</option>
                           <option value="$2,500 - $5,000 / mo">$2,500 - $5,000 / mo</option>
                           <option value="$5,000 - $10,000 / mo">$5,000 - $10,000 / mo</option>
                           <option value="$10,000+ / mo">$10,000+ / mo</option>
                           <option value="One-Time Strategic Scope">One-Time Strategic Scope</option>
+                          <option value="To be discussed">To be discussed</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-neutral-700 mb-1">
+                          Target Timeline <span className="text-neutral-400 font-normal">(Optional)</span>
+                        </label>
+                        <select
+                          value={formData.timeline}
+                          onChange={(e) => setFormData({ ...formData, timeline: e.target.value })}
+                          className="w-full px-3 py-2.5 rounded-xl border border-[#E9E7F2] bg-white text-xs text-neutral-900 focus:border-[#6D28D9] focus:outline-none"
+                        >
+                          <option value="Immediate (1-2 weeks)">Immediate (1-2 weeks)</option>
+                          <option value="Within 2-4 weeks">Within 2-4 weeks</option>
+                          <option value="1-2 months">1-2 months</option>
+                          <option value="Flexible / Planning stage">Flexible / Planning stage</option>
                         </select>
                       </div>
                     </div>
 
+                    {/* Conditional Service Question */}
+                    <div className="p-3.5 rounded-2xl bg-[#FAF9FF] border border-[#E9E7F2]">
+                      <label className="block text-xs font-bold text-neutral-800 mb-1">
+                        {getServiceQuestionLabel(formData.service)}
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.serviceDetails}
+                        onFocus={handleInputFocus}
+                        onChange={(e) => setFormData({ ...formData, serviceDetails: e.target.value })}
+                        placeholder="Outline any key specifics, current platforms, or metrics..."
+                        className="w-full px-3.5 py-2 rounded-xl border border-[#E9E7F2] bg-white text-xs text-neutral-900 focus:border-[#6D28D9] focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Message */}
                     <div>
                       <label className="block text-xs font-bold text-neutral-700 mb-1">
-                        Project Outline & Growth Objectives *
+                        Project Outline &amp; Growth Objectives *
                       </label>
                       <textarea
                         rows={4}
                         value={formData.message}
+                        onFocus={handleInputFocus}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         placeholder="Tell us what you are aiming to achieve, current baseline numbers, and target timeline..."
                         className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-neutral-900 focus:outline-none transition-colors ${
@@ -382,6 +548,21 @@ export const ContactPage: React.FC = () => {
                       />
                       {errors.message && <p className="text-[11px] text-red-500 mt-1">{errors.message}</p>}
                     </div>
+
+                    {/* Consent */}
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        type="checkbox"
+                        id="consent-contact"
+                        checked={formData.consentGiven}
+                        onChange={(e) => setFormData({ ...formData, consentGiven: e.target.checked })}
+                        className="mt-0.5 w-4 h-4 rounded border-neutral-300 text-[#6D28D9] focus:ring-[#6D28D9]"
+                      />
+                      <label htmlFor="consent-contact" className="text-[11px] text-neutral-600 leading-tight">
+                        I agree to receive a direct project review and communication from House Robotics regarding this enquiry. We respect your privacy and never sell or share contact information.
+                      </label>
+                    </div>
+                    {errors.consent && <p className="text-[11px] text-red-500">{errors.consent}</p>}
 
                     <div className="pt-2">
                       <motion.button
@@ -392,7 +573,10 @@ export const ContactPage: React.FC = () => {
                         className="btn-micro w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-[#6D28D9] hover:bg-[#5B21B6] text-white text-sm font-bold shadow-md transition-shadow disabled:opacity-50"
                       >
                         {isSubmitting ? (
-                          <span>Transmitting Brief...</span>
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Transmitting Brief...</span>
+                          </>
                         ) : (
                           <>
                             <span>Send My Enquiry</span>

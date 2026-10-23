@@ -976,6 +976,821 @@ export const SEO_METADATA_REGISTRY: Record<string, PageSeoConfig> = {
     ]
   },
 
+  '/usa': {
+    path: '/usa',
+    name: 'USA National Hub',
+    primaryKeyword: 'USA digital marketing and technology agency',
+    secondaryKeywords: ['USA SEO agency', 'US web development', 'national digital marketing', 'AI automation USA'],
+    searchIntent: 'Commercial',
+    seoTitle: 'USA Digital Marketing, SEO & Web Dev | House Robotics', // 53 chars
+    metaDescription: 'Specialized digital marketing, technical SEO, custom web development, and AI automation for high-growth businesses across all 50 US states.', // 140 chars
+    canonicalUrl: `${BASE_URL}/usa`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'USA Digital Marketing, SEO & Web Dev | House Robotics',
+    ogDescription: 'Specialized digital marketing, technical SEO, custom web development, and AI automation for high-growth businesses across all 50 US states.',
+    ogImage: `${BASE_URL}/assets/home-hero-visual.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'USA Digital Marketing, SEO & Web Dev | House Robotics',
+    twitterDescription: 'Specialized digital marketing, technical SEO, custom web development, and AI automation for high-growth businesses across all 50 US states.',
+    twitterImage: `${BASE_URL}/assets/home-hero-visual.webp`,
+    h1: 'Digital Marketing & Technology for High-Growth US Businesses',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` }
+    ]
+  },
+
+  '/usa/texas/austin/seo-services': {
+    path: '/usa/texas/austin/seo-services',
+    name: 'Austin SEO Services',
+    primaryKeyword: 'Austin SEO Services',
+    secondaryKeywords: ['Austin SEO agency', 'Silicon Hills organic search', 'SaaS SEO Austin', 'technical SEO Austin Texas'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Austin SEO Services & Organic Growth | House Robotics', // 53 chars
+    metaDescription: 'Specialized technical SEO, enterprise keyword architecture, and organic search growth for Austin SaaS startups, tech firms, and commercial services.', // 148 chars
+    canonicalUrl: `${BASE_URL}/usa/texas/austin/seo-services`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Austin SEO Services & Organic Growth | House Robotics',
+    ogDescription: 'Specialized technical SEO, enterprise keyword architecture, and organic search growth for Austin SaaS startups, tech firms, and commercial services.',
+    ogImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Austin SEO Services & Organic Growth | House Robotics',
+    twitterDescription: 'Specialized technical SEO, enterprise keyword architecture, and organic search growth for Austin SaaS startups, tech firms, and commercial services.',
+    twitterImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    h1: 'High-Performance SEO Services for Austin Tech, SaaS & Enterprise Brands',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Texas', url: `${BASE_URL}/usa/texas` },
+      { name: 'Austin', url: `${BASE_URL}/usa/texas/austin` },
+      { name: 'SEO Services', url: `${BASE_URL}/usa/texas/austin/seo-services` }
+    ]
+  },
+
+  '/usa/texas/austin/web-development': {
+    path: '/usa/texas/austin/web-development',
+    name: 'Austin Web Development',
+    primaryKeyword: 'Austin Website Development',
+    secondaryKeywords: ['Austin web design', 'custom web development Austin', 'React developer Austin'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Austin Custom Website Development | House Robotics', // 50 chars
+    metaDescription: 'Custom website development and modern web applications for Austin businesses. Ultra-fast performance, responsive design, and enterprise-grade code.', // 147 chars
+    canonicalUrl: `${BASE_URL}/usa/texas/austin/web-development`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Austin Custom Website Development | House Robotics',
+    ogDescription: 'Custom website development and modern web applications for Austin businesses. Ultra-fast performance, responsive design, and enterprise-grade code.',
+    ogImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Austin Custom Website Development | House Robotics',
+    twitterDescription: 'Custom website development and modern web applications for Austin businesses. Ultra-fast performance, responsive design, and enterprise-grade code.',
+    twitterImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    h1: 'Custom Website Development & Modern Engineering in Austin, Texas',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Texas', url: `${BASE_URL}/usa/texas` },
+      { name: 'Austin', url: `${BASE_URL}/usa/texas/austin` },
+      { name: 'Web Development', url: `${BASE_URL}/usa/texas/austin/web-development` }
+    ]
+  },
+
+  '/usa/new-york/new-york-city/web-development': {
+    path: '/usa/new-york/new-york-city/web-development',
+    name: 'NYC Web Development',
+    primaryKeyword: 'NYC Website Development',
+    secondaryKeywords: ['New York web design', 'custom web engineering NYC', 'Manhattan website developers'],
+    searchIntent: 'Commercial',
+    seoTitle: 'NYC Website Development & Engineering | House Robotics', // 54 chars
+    metaDescription: 'Custom website development and high-performance digital engineering for New York City enterprises, financial institutions, and creative agencies.', // 145 chars
+    canonicalUrl: `${BASE_URL}/usa/new-york/new-york-city/web-development`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'NYC Website Development & Engineering | House Robotics',
+    ogDescription: 'Custom website development and high-performance digital engineering for New York City enterprises, financial institutions, and creative agencies.',
+    ogImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'NYC Website Development & Engineering | House Robotics',
+    twitterDescription: 'Custom website development and high-performance digital engineering for New York City enterprises, financial institutions, and creative agencies.',
+    twitterImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    h1: 'Bespoke Website Development for New York City Financial & Enterprise Brands',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'New York', url: `${BASE_URL}/usa/new-york` },
+      { name: 'New York City', url: `${BASE_URL}/usa/new-york/new-york-city` },
+      { name: 'Web Development', url: `${BASE_URL}/usa/new-york/new-york-city/web-development` }
+    ]
+  },
+
+  '/usa/new-york/new-york-city/seo-services': {
+    path: '/usa/new-york/new-york-city/seo-services',
+    name: 'NYC SEO Services',
+    primaryKeyword: 'NYC SEO Services',
+    secondaryKeywords: ['New York City SEO', 'Manhattan enterprise SEO', 'organic search NYC'],
+    searchIntent: 'Commercial',
+    seoTitle: 'NYC SEO Services & Search Strategy | House Robotics', // 51 chars
+    metaDescription: 'Dominant enterprise SEO and organic search strategy for New York City businesses. Technical audits, high-intent keyword ranking, and compounding pipeline.', // 154 chars
+    canonicalUrl: `${BASE_URL}/usa/new-york/new-york-city/seo-services`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'NYC SEO Services & Search Strategy | House Robotics',
+    ogDescription: 'Dominant enterprise SEO and organic search strategy for New York City businesses. Technical audits, high-intent keyword ranking, and compounding pipeline.',
+    ogImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'NYC SEO Services & Search Strategy | House Robotics',
+    twitterDescription: 'Dominant enterprise SEO and organic search strategy for New York City businesses. Technical audits, high-intent keyword ranking, and compounding pipeline.',
+    twitterImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    h1: 'Enterprise SEO Services in New York City: Outrank High-Value Manhattan Competitors',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'New York', url: `${BASE_URL}/usa/new-york` },
+      { name: 'New York City', url: `${BASE_URL}/usa/new-york/new-york-city` },
+      { name: 'SEO Services', url: `${BASE_URL}/usa/new-york/new-york-city/seo-services` }
+    ]
+  },
+
+  '/usa/california/los-angeles/digital-marketing': {
+    path: '/usa/california/los-angeles/digital-marketing',
+    name: 'Los Angeles Digital Marketing',
+    primaryKeyword: 'Los Angeles Digital Marketing',
+    secondaryKeywords: ['LA marketing agency', 'digital marketing Los Angeles', 'Silicon Beach marketing'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Los Angeles Digital Marketing Agency | House Robotics', // 53 chars
+    metaDescription: 'Strategic digital marketing, paid advertising, and conversion funnels for Los Angeles businesses. Proven customer acquisition systems for LA enterprises.', // 153 chars
+    canonicalUrl: `${BASE_URL}/usa/california/los-angeles/digital-marketing`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Los Angeles Digital Marketing Agency | House Robotics',
+    ogDescription: 'Strategic digital marketing, paid advertising, and conversion funnels for Los Angeles businesses. Proven customer acquisition systems for LA enterprises.',
+    ogImage: `${BASE_URL}/assets/social-media-marketing-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Los Angeles Digital Marketing Agency | House Robotics',
+    twitterDescription: 'Strategic digital marketing, paid advertising, and conversion funnels for Los Angeles businesses. Proven customer acquisition systems for LA enterprises.',
+    twitterImage: `${BASE_URL}/assets/social-media-marketing-page-hero.webp`,
+    h1: 'Strategic Digital Marketing & Customer Acquisition in Los Angeles',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'California', url: `${BASE_URL}/usa/california` },
+      { name: 'Los Angeles', url: `${BASE_URL}/usa/california/los-angeles` },
+      { name: 'Digital Marketing', url: `${BASE_URL}/usa/california/los-angeles/digital-marketing` }
+    ]
+  },
+
+  '/usa/california/san-francisco/ai-automation': {
+    path: '/usa/california/san-francisco/ai-automation',
+    name: 'San Francisco AI Automation',
+    primaryKeyword: 'San Francisco AI Automation',
+    secondaryKeywords: ['Bay Area AI workflows', 'automated lead routing SF', 'enterprise AI integration'],
+    searchIntent: 'Commercial',
+    seoTitle: 'San Francisco AI Automation Systems | House Robotics', // 52 chars
+    metaDescription: 'Custom AI automation and intelligent workflow engineering for San Francisco tech companies and scaling ventures. Automate operations and accelerate growth.', // 155 chars
+    canonicalUrl: `${BASE_URL}/usa/california/san-francisco/ai-automation`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'San Francisco AI Automation Systems | House Robotics',
+    ogDescription: 'Custom AI automation and intelligent workflow engineering for San Francisco tech companies and scaling ventures. Automate operations and accelerate growth.',
+    ogImage: `${BASE_URL}/assets/home-ai-automation.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'San Francisco AI Automation Systems | House Robotics',
+    twitterDescription: 'Custom AI automation and intelligent workflow engineering for San Francisco tech companies and scaling ventures. Automate operations and accelerate growth.',
+    twitterImage: `${BASE_URL}/assets/home-ai-automation.webp`,
+    h1: 'AI Automation & Intelligent Workflow Engineering in San Francisco',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'California', url: `${BASE_URL}/usa/california` },
+      { name: 'San Francisco', url: `${BASE_URL}/usa/california/san-francisco` },
+      { name: 'AI Automation', url: `${BASE_URL}/usa/california/san-francisco/ai-automation` }
+    ]
+  },
+
+  '/usa/illinois/chicago/seo-services': {
+    path: '/usa/illinois/chicago/seo-services',
+    name: 'Chicago B2B SEO Services',
+    primaryKeyword: 'Chicago B2B SEO Services',
+    secondaryKeywords: ['Chicago SEO agency', 'industrial SEO Chicago', 'B2B search engine optimization Illinois'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Chicago B2B SEO Services & Growth | House Robotics', // 50 chars
+    metaDescription: 'Specialized B2B and industrial SEO services in Chicago. Technical search optimization, commercial keyword architecture, and qualified pipeline generation.', // 154 chars
+    canonicalUrl: `${BASE_URL}/usa/illinois/chicago/seo-services`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Chicago B2B SEO Services & Growth | House Robotics',
+    ogDescription: 'Specialized B2B and industrial SEO services in Chicago. Technical search optimization, commercial keyword architecture, and qualified pipeline generation.',
+    ogImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Chicago B2B SEO Services & Growth | House Robotics',
+    twitterDescription: 'Specialized B2B and industrial SEO services in Chicago. Technical search optimization, commercial keyword architecture, and qualified pipeline generation.',
+    twitterImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    h1: 'B2B SEO & Organic Lead Generation for Chicago Enterprises',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Illinois', url: `${BASE_URL}/usa/illinois` },
+      { name: 'Chicago', url: `${BASE_URL}/usa/illinois/chicago` },
+      { name: 'SEO Services', url: `${BASE_URL}/usa/illinois/chicago/seo-services` }
+    ]
+  },
+
+  '/usa/florida/miami/web-development': {
+    path: '/usa/florida/miami/web-development',
+    name: 'Miami Web Development',
+    primaryKeyword: 'Miami Website Development',
+    secondaryKeywords: ['Miami web design', 'custom web developers Miami', 'luxury web design Florida'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Miami Custom Website Development | House Robotics', // 49 chars
+    metaDescription: 'Custom website development and modern web applications for Miami businesses. Ultra-fast performance, luxury design, and conversion-focused architecture.', // 152 chars
+    canonicalUrl: `${BASE_URL}/usa/florida/miami/web-development`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Miami Custom Website Development | House Robotics',
+    ogDescription: 'Custom website development and modern web applications for Miami businesses. Ultra-fast performance, luxury design, and conversion-focused architecture.',
+    ogImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Miami Custom Website Development | House Robotics',
+    twitterDescription: 'Custom website development and modern web applications for Miami businesses. Ultra-fast performance, luxury design, and conversion-focused architecture.',
+    twitterImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    h1: 'High-Performance Custom Website Development in Miami, Florida',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Florida', url: `${BASE_URL}/usa/florida` },
+      { name: 'Miami', url: `${BASE_URL}/usa/florida/miami` },
+      { name: 'Web Development', url: `${BASE_URL}/usa/florida/miami/web-development` }
+    ]
+  },
+
+  '/usa/texas/dallas/ppc-management': {
+    path: '/usa/texas/dallas/ppc-management',
+    name: 'Dallas PPC Management',
+    primaryKeyword: 'Dallas PPC Management',
+    secondaryKeywords: ['Google Ads agency Dallas', 'DFW PPC management', 'paid search Texas'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Dallas PPC Management & Google Ads | House Robotics', // 51 chars
+    metaDescription: 'Disciplined Google Ads and PPC management for Dallas-Fort Worth businesses. High-intent conversion capture, negative keyword architecture, and proven ROAS.', // 155 chars
+    canonicalUrl: `${BASE_URL}/usa/texas/dallas/ppc-management`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Dallas PPC Management & Google Ads | House Robotics',
+    ogDescription: 'Disciplined Google Ads and PPC management for Dallas-Fort Worth businesses. High-intent conversion capture, negative keyword architecture, and proven ROAS.',
+    ogImage: `${BASE_URL}/assets/ppc-google-ads-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Dallas PPC Management & Google Ads | House Robotics',
+    twitterDescription: 'Disciplined Google Ads and PPC management for Dallas-Fort Worth businesses. High-intent conversion capture, negative keyword architecture, and proven ROAS.',
+    twitterImage: `${BASE_URL}/assets/ppc-google-ads-page-hero.webp`,
+    h1: 'PPC Management & High-Converting Google Ads in Dallas-Fort Worth',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Texas', url: `${BASE_URL}/usa/texas` },
+      { name: 'Dallas', url: `${BASE_URL}/usa/texas/dallas` },
+      { name: 'PPC Management', url: `${BASE_URL}/usa/texas/dallas/ppc-management` }
+    ]
+  },
+
+  '/usa/washington/seattle/web-development': {
+    path: '/usa/washington/seattle/web-development',
+    name: 'Seattle Web Development',
+    primaryKeyword: 'Seattle Website Development',
+    secondaryKeywords: ['Seattle web design', 'custom web development Seattle', 'cloud web engineering WA'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Seattle Custom Website Development | House Robotics', // 51 chars
+    metaDescription: 'Custom website development and modern web applications for Seattle businesses. Sub-second load times, cloud architecture, and conversion-focused UX.', // 148 chars
+    canonicalUrl: `${BASE_URL}/usa/washington/seattle/web-development`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Seattle Custom Website Development | House Robotics',
+    ogDescription: 'Custom website development and modern web applications for Seattle businesses. Sub-second load times, cloud architecture, and conversion-focused UX.',
+    ogImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Seattle Custom Website Development | House Robotics',
+    twitterDescription: 'Custom website development and modern web applications for Seattle businesses. Sub-second load times, cloud architecture, and conversion-focused UX.',
+    twitterImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    h1: 'High-Performance Custom Website Development in Seattle, Washington',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Washington', url: `${BASE_URL}/usa/washington` },
+      { name: 'Seattle', url: `${BASE_URL}/usa/washington/seattle` },
+      { name: 'Web Development', url: `${BASE_URL}/usa/washington/seattle/web-development` }
+    ]
+  },
+
+  '/usa/georgia/atlanta/seo-services': {
+    path: '/usa/georgia/atlanta/seo-services',
+    name: 'Atlanta SEO Services',
+    primaryKeyword: 'Atlanta SEO Services',
+    secondaryKeywords: ['Atlanta SEO agency', 'organic search Atlanta GA', 'commercial SEO Georgia'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Atlanta SEO Services & Organic Search | House Robotics', // 54 chars
+    metaDescription: 'Strategic SEO and organic search dominance for Atlanta businesses. Technical audits, high-intent keyword ranking, and compounding revenue pipeline.', // 147 chars
+    canonicalUrl: `${BASE_URL}/usa/georgia/atlanta/seo-services`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Atlanta SEO Services & Organic Search | House Robotics',
+    ogDescription: 'Strategic SEO and organic search dominance for Atlanta businesses. Technical audits, high-intent keyword ranking, and compounding revenue pipeline.',
+    ogImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Atlanta SEO Services & Organic Search | House Robotics',
+    twitterDescription: 'Strategic SEO and organic search dominance for Atlanta businesses. Technical audits, high-intent keyword ranking, and compounding revenue pipeline.',
+    twitterImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    h1: 'High-Performance SEO Services for Atlanta Commercial Leaders',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Georgia', url: `${BASE_URL}/usa/georgia` },
+      { name: 'Atlanta', url: `${BASE_URL}/usa/georgia/atlanta` },
+      { name: 'SEO Services', url: `${BASE_URL}/usa/georgia/atlanta/seo-services` }
+    ]
+  },
+
+  '/usa/massachusetts/boston/ai-automation': {
+    path: '/usa/massachusetts/boston/ai-automation',
+    name: 'Boston AI Automation',
+    primaryKeyword: 'Boston AI Automation',
+    secondaryKeywords: ['Boston AI workflow engineering', 'biotech AI automation', 'business process automation Boston'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Boston AI Automation & Workflows | House Robotics', // 49 chars
+    metaDescription: 'Custom AI automation and intelligent workflow engineering for Boston biotechnology, education, and tech ventures. Streamline operations and save hours.', // 151 chars
+    canonicalUrl: `${BASE_URL}/usa/massachusetts/boston/ai-automation`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Boston AI Automation & Workflows | House Robotics',
+    ogDescription: 'Custom AI automation and intelligent workflow engineering for Boston biotechnology, education, and tech ventures. Streamline operations and save hours.',
+    ogImage: `${BASE_URL}/assets/home-ai-automation.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Boston AI Automation & Workflows | House Robotics',
+    twitterDescription: 'Custom AI automation and intelligent workflow engineering for Boston biotechnology, education, and tech ventures. Streamline operations and save hours.',
+    twitterImage: `${BASE_URL}/assets/home-ai-automation.webp`,
+    h1: 'AI Automation & Intelligent Workflow Systems in Boston, Massachusetts',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Massachusetts', url: `${BASE_URL}/usa/massachusetts` },
+      { name: 'Boston', url: `${BASE_URL}/usa/massachusetts/boston` },
+      { name: 'AI Automation', url: `${BASE_URL}/usa/massachusetts/boston/ai-automation` }
+    ]
+  },
+
+  '/usa/colorado/denver/web-development': {
+    path: '/usa/colorado/denver/web-development',
+    name: 'Denver Web Development',
+    primaryKeyword: 'Denver Website Development',
+    secondaryKeywords: ['Denver web design', 'custom web development Colorado', 'Rocky Mountain web engineering'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Denver Custom Website Development | House Robotics', // 50 chars
+    metaDescription: 'Custom website development and modern web applications for Denver tech, clean energy, and commercial leaders. Built for high speed and conversion.', // 146 chars
+    canonicalUrl: `${BASE_URL}/usa/colorado/denver/web-development`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Denver Custom Website Development | House Robotics',
+    ogDescription: 'Custom website development and modern web applications for Denver tech, clean energy, and commercial leaders. Built for high speed and conversion.',
+    ogImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Denver Custom Website Development | House Robotics',
+    twitterDescription: 'Custom website development and modern web applications for Denver tech, clean energy, and commercial leaders. Built for high speed and conversion.',
+    twitterImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    h1: 'Custom Website Development & Modern Engineering in Denver, Colorado',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Colorado', url: `${BASE_URL}/usa/colorado` },
+      { name: 'Denver', url: `${BASE_URL}/usa/colorado/denver` },
+      { name: 'Web Development', url: `${BASE_URL}/usa/colorado/denver/web-development` }
+    ]
+  },
+
+  '/usa/arizona/phoenix/local-seo': {
+    path: '/usa/arizona/phoenix/local-seo',
+    name: 'Phoenix Local SEO',
+    primaryKeyword: 'Phoenix Local SEO',
+    secondaryKeywords: ['Phoenix local search', 'Google Maps 3 pack Phoenix', 'Valley of the Sun SEO'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Phoenix Local SEO & Maps Ranking | House Robotics', // 49 chars
+    metaDescription: 'Targeted local SEO, Google Business Profile optimization, and local citation architecture for commercial service leaders across Greater Phoenix, Arizona.', // 153 chars
+    canonicalUrl: `${BASE_URL}/usa/arizona/phoenix/local-seo`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Phoenix Local SEO & Maps Ranking | House Robotics',
+    ogDescription: 'Targeted local SEO, Google Business Profile optimization, and local citation architecture for commercial service leaders across Greater Phoenix, Arizona.',
+    ogImage: `${BASE_URL}/assets/local-seo-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Phoenix Local SEO & Maps Ranking | House Robotics',
+    twitterDescription: 'Targeted local SEO, Google Business Profile optimization, and local citation architecture for commercial service leaders across Greater Phoenix, Arizona.',
+    twitterImage: `${BASE_URL}/assets/local-seo-page-hero.webp`,
+    h1: 'Local SEO & Google Maps 3-Pack Marketing in Phoenix, Arizona',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Arizona', url: `${BASE_URL}/usa/arizona` },
+      { name: 'Phoenix', url: `${BASE_URL}/usa/arizona/phoenix` },
+      { name: 'Local SEO', url: `${BASE_URL}/usa/arizona/phoenix/local-seo` }
+    ]
+  },
+
+  '/usa/texas/houston/seo-services': {
+    path: '/usa/texas/houston/seo-services',
+    name: 'Houston SEO Services',
+    primaryKeyword: 'Houston SEO Services',
+    secondaryKeywords: ['Houston SEO agency', 'industrial SEO Houston TX', 'energy sector organic search'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Houston SEO Services & Organic Search | House Robotics', // 54 chars
+    metaDescription: 'Strategic technical SEO, enterprise keyword architecture, and organic lead acquisition for Houston energy, manufacturing, and commercial leaders.', // 145 chars
+    canonicalUrl: `${BASE_URL}/usa/texas/houston/seo-services`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Houston SEO Services & Organic Search | House Robotics',
+    ogDescription: 'Strategic technical SEO, enterprise keyword architecture, and organic lead acquisition for Houston energy, manufacturing, and commercial leaders.',
+    ogImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Houston SEO Services & Organic Search | House Robotics',
+    twitterDescription: 'Strategic technical SEO, enterprise keyword architecture, and organic lead acquisition for Houston energy, manufacturing, and commercial leaders.',
+    twitterImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+    h1: 'B2B & Industrial SEO Services in Houston, Texas',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'Texas', url: `${BASE_URL}/usa/texas` },
+      { name: 'Houston', url: `${BASE_URL}/usa/texas/houston` },
+      { name: 'SEO Services', url: `${BASE_URL}/usa/texas/houston/seo-services` }
+    ]
+  },
+
+  '/usa/california/san-diego/web-development': {
+    path: '/usa/california/san-diego/web-development',
+    name: 'San Diego Web Development',
+    primaryKeyword: 'San Diego Website Development',
+    secondaryKeywords: ['San Diego web design', 'custom web apps San Diego CA', 'biotech web development'],
+    searchIntent: 'Commercial',
+    seoTitle: 'San Diego Website Development Services | House Robotics', // 55 chars
+    metaDescription: 'Modern custom web development, React applications, and enterprise CMS engineering for San Diego biotechnology, defense, and technology companies.', // 145 chars
+    canonicalUrl: `${BASE_URL}/usa/california/san-diego/web-development`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'San Diego Website Development Services | House Robotics',
+    ogDescription: 'Modern custom web development, React applications, and enterprise CMS engineering for San Diego biotechnology, defense, and technology companies.',
+    ogImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'San Diego Website Development Services | House Robotics',
+    twitterDescription: 'Modern custom web development, React applications, and enterprise CMS engineering for San Diego biotechnology, defense, and technology companies.',
+    twitterImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    h1: 'Custom Website Development & Modern Engineering in San Diego, California',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'California', url: `${BASE_URL}/usa/california` },
+      { name: 'San Diego', url: `${BASE_URL}/usa/california/san-diego` },
+      { name: 'Web Development', url: `${BASE_URL}/usa/california/san-diego/web-development` }
+    ]
+  },
+
+  '/usa/north-carolina/charlotte/web-development': {
+    path: '/usa/north-carolina/charlotte/web-development',
+    name: 'Charlotte Web Development',
+    primaryKeyword: 'Charlotte Website Development',
+    secondaryKeywords: ['Charlotte web design', 'banking tech web development NC', 'custom web engineering Charlotte'],
+    searchIntent: 'Commercial',
+    seoTitle: 'Charlotte Website Development Services | House Robotics', // 55 chars
+    metaDescription: 'Custom website development and modern web apps for Charlotte financial, healthcare, and corporate firms. Ultra-fast performance and security.', // 141 chars
+    canonicalUrl: `${BASE_URL}/usa/north-carolina/charlotte/web-development`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'Charlotte Website Development Services | House Robotics',
+    ogDescription: 'Custom website development and modern web apps for Charlotte financial, healthcare, and corporate firms. Ultra-fast performance and security.',
+    ogImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Charlotte Website Development Services | House Robotics',
+    twitterDescription: 'Custom website development and modern web apps for Charlotte financial, healthcare, and corporate firms. Ultra-fast performance and security.',
+    twitterImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    h1: 'Enterprise Website Development in Charlotte, North Carolina',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'North Carolina', url: `${BASE_URL}/usa/north-carolina` },
+      { name: 'Charlotte', url: `${BASE_URL}/usa/north-carolina/charlotte` },
+      { name: 'Web Development', url: `${BASE_URL}/usa/north-carolina/charlotte/web-development` }
+    ]
+  },
+
+  '/usa/california/san-francisco/web-development': {
+    path: '/usa/california/san-francisco/web-development',
+    name: 'San Francisco Web Development',
+    primaryKeyword: 'San Francisco Website Development',
+    secondaryKeywords: ['San Francisco web design', 'startup web development SF', 'Silicon Valley web apps'],
+    searchIntent: 'Commercial',
+    seoTitle: 'San Francisco Website Development | House Robotics', // 50 chars
+    metaDescription: 'High-performance custom website development and React engineering for San Francisco technology companies, AI startups, and SaaS platforms.', // 138 chars
+    canonicalUrl: `${BASE_URL}/usa/california/san-francisco/web-development`,
+    robots: 'index, follow',
+    ogType: 'website',
+    ogTitle: 'San Francisco Website Development | House Robotics',
+    ogDescription: 'High-performance custom website development and React engineering for San Francisco technology companies, AI startups, and SaaS platforms.',
+    ogImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'San Francisco Website Development | House Robotics',
+    twitterDescription: 'High-performance custom website development and React engineering for San Francisco technology companies, AI startups, and SaaS platforms.',
+    twitterImage: `${BASE_URL}/assets/web-development-page-hero.webp`,
+    h1: 'Next-Gen Custom Website Development in San Francisco, California',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'USA', url: `${BASE_URL}/usa` },
+      { name: 'California', url: `${BASE_URL}/usa/california` },
+      { name: 'San Francisco', url: `${BASE_URL}/usa/california/san-francisco` },
+      { name: 'Web Development', url: `${BASE_URL}/usa/california/san-francisco/web-development` }
+    ]
+  },
+
+  '/how-much-does-seo-cost-in-the-uk': {
+    path: '/how-much-does-seo-cost-in-the-uk',
+    name: 'UK SEO Cost Guide 2026',
+    primaryKeyword: 'how much does SEO cost in the UK',
+    secondaryKeywords: ['UK SEO pricing', 'SEO retainers UK', 'SEO agency costs'],
+    searchIntent: 'Informational',
+    seoTitle: 'How Much Does SEO Cost in the UK? 2026 Pricing Guide', // 52 chars
+    metaDescription: 'Discover typical UK SEO costs in 2026. Explore monthly retainers (£500–£5,000+), one-off audit rates, project pricing, and what drives organic search ROI.', // 154 chars
+    canonicalUrl: `${BASE_URL}/how-much-does-seo-cost-in-the-uk/`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'How Much Does SEO Cost in the UK? 2026 Pricing Guide',
+    ogDescription: 'Discover typical UK SEO costs in 2026. Explore monthly retainers (£500–£5,000+), one-off audit rates, project pricing, and what drives organic search ROI.',
+    ogImage: `${BASE_URL}/images/how-much-does-seo-cost-in-the-uk.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'How Much Does SEO Cost in the UK? 2026 Pricing Guide',
+    twitterDescription: 'Discover typical UK SEO costs in 2026. Explore monthly retainers (£500–£5,000+), one-off audit rates, project pricing, and what drives organic search ROI.',
+    twitterImage: `${BASE_URL}/images/how-much-does-seo-cost-in-the-uk.webp`,
+    h1: 'How Much Does SEO Cost in the UK? Complete 2026 Pricing Guide',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'UK SEO Costs', url: `${BASE_URL}/how-much-does-seo-cost-in-the-uk/` }
+    ]
+  },
+
+  '/what-is-seo-and-why-does-your-business-need-it': {
+    path: '/what-is-seo-and-why-does-your-business-need-it',
+    name: 'What Is SEO Guide',
+    primaryKeyword: 'what is SEO and why does your business need it',
+    secondaryKeywords: ['organic search visibility', 'why SEO matters', 'benefits of SEO'],
+    searchIntent: 'Informational',
+    seoTitle: 'What Is SEO & Why Does Your Business Need It? (Guide)', // 53 chars
+    metaDescription: 'Learn what SEO is and why every business needs organic search visibility to build trust, capture high-intent leads, and drive compounding revenue.', // 146 chars
+    canonicalUrl: `${BASE_URL}/what-is-seo-and-why-does-your-business-need-it/`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'What Is SEO & Why Does Your Business Need It? (Guide)',
+    ogDescription: 'Learn what SEO is and why every business needs organic search visibility to build trust, capture high-intent leads, and drive compounding revenue.',
+    ogImage: `${BASE_URL}/images/what-is-seo-and-why-does-your-business-need-it.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'What Is SEO & Why Does Your Business Need It? (Guide)',
+    twitterDescription: 'Learn what SEO is and why every business needs organic search visibility to build trust, capture high-intent leads, and drive compounding revenue.',
+    twitterImage: `${BASE_URL}/images/what-is-seo-and-why-does-your-business-need-it.webp`,
+    h1: 'What Is SEO and Why Does Your Business Need It in 2026?',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'What Is SEO', url: `${BASE_URL}/what-is-seo-and-why-does-your-business-need-it/` }
+    ]
+  },
+
+  '/seo-vs-ppc-which-is-better-for-your-business': {
+    path: '/seo-vs-ppc-which-is-better-for-your-business',
+    name: 'SEO vs PPC Comparison',
+    primaryKeyword: 'SEO vs PPC',
+    secondaryKeywords: ['organic search vs paid ads', 'SEO vs Google ads', 'search engine marketing comparison'],
+    searchIntent: 'Informational',
+    seoTitle: 'SEO vs PPC: Which Is Better for Your Business?', // 46 chars
+    metaDescription: 'SEO vs PPC comparison guide: discover differences in speed, cost, long-term ROI, and learn how to build a unified search strategy that maximizes revenue.', // 153 chars
+    canonicalUrl: `${BASE_URL}/seo-vs-ppc-which-is-better-for-your-business/`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'SEO vs PPC: Which Is Better for Your Business?',
+    ogDescription: 'SEO vs PPC comparison guide: discover differences in speed, cost, long-term ROI, and learn how to build a unified search strategy that maximizes revenue.',
+    ogImage: `${BASE_URL}/images/seo-vs-ppc-which-is-better-for-your-business.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'SEO vs PPC: Which Is Better for Your Business?',
+    twitterDescription: 'SEO vs PPC comparison guide: discover differences in speed, cost, long-term ROI, and learn how to build a unified search strategy that maximizes revenue.',
+    twitterImage: `${BASE_URL}/images/seo-vs-ppc-which-is-better-for-your-business.webp`,
+    h1: 'SEO vs PPC: Which Search Strategy Is Better for Your Business?',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'SEO vs PPC', url: `${BASE_URL}/seo-vs-ppc-which-is-better-for-your-business/` }
+    ]
+  },
+
+  '/how-google-business-profile-helps-local-businesses': {
+    path: '/how-google-business-profile-helps-local-businesses',
+    name: 'Google Business Profile Guide',
+    primaryKeyword: 'how Google Business Profile helps local businesses',
+    secondaryKeywords: ['Google Business Profile local SEO', 'Google Maps 3 pack guide', 'local listing management'],
+    searchIntent: 'Informational',
+    seoTitle: 'How Google Business Profile Helps Local Businesses | Guide', // 58 chars
+    metaDescription: 'Discover how Google Business Profile drives local visibility, Google Maps 3-Pack rankings, customer trust, and steady inbound phone calls for local businesses.', // 159 chars
+    canonicalUrl: `${BASE_URL}/how-google-business-profile-helps-local-businesses/`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'How Google Business Profile Helps Local Businesses | Guide',
+    ogDescription: 'Discover how Google Business Profile drives local visibility, Google Maps 3-Pack rankings, customer trust, and steady inbound phone calls for local businesses.',
+    ogImage: `${BASE_URL}/images/how-google-business-profile-helps-local-businesses.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'How Google Business Profile Helps Local Businesses | Guide',
+    twitterDescription: 'Discover how Google Business Profile drives local visibility, Google Maps 3-Pack rankings, customer trust, and steady inbound phone calls for local businesses.',
+    twitterImage: `${BASE_URL}/images/how-google-business-profile-helps-local-businesses.webp`,
+    h1: 'How Google Business Profile Helps Local Businesses Win Customers',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'Google Business Profile', url: `${BASE_URL}/how-google-business-profile-helps-local-businesses/` }
+    ]
+  },
+
+  '/how-to-improve-your-google-rankings-in-2026': {
+    path: '/how-to-improve-your-google-rankings-in-2026',
+    name: 'Improve Google Rankings 2026',
+    primaryKeyword: 'how to improve your Google rankings in 2026',
+    secondaryKeywords: ['boost Google rankings', '2026 SEO roadmap', 'AI overviews optimization'],
+    searchIntent: 'Informational',
+    seoTitle: 'How to Improve Google Rankings in 2026 | Full Guide', // 51 chars
+    metaDescription: 'Actionable playbook on improving Google rankings in 2026. Master AI Overviews, semantic entity optimization, Core Web Vitals, and authoritative backlinks.', // 154 chars
+    canonicalUrl: `${BASE_URL}/how-to-improve-your-google-rankings-in-2026/`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'How to Improve Google Rankings in 2026 | Full Guide',
+    ogDescription: 'Actionable playbook on improving Google rankings in 2026. Master AI Overviews, semantic entity optimization, Core Web Vitals, and authoritative backlinks.',
+    ogImage: `${BASE_URL}/images/how-to-improve-your-google-rankings-in-2026.webp`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'How to Improve Google Rankings in 2026 | Full Guide',
+    twitterDescription: 'Actionable playbook on improving Google rankings in 2026. Master AI Overviews, semantic entity optimization, Core Web Vitals, and authoritative backlinks.',
+    twitterImage: `${BASE_URL}/images/how-to-improve-your-google-rankings-in-2026.webp`,
+    h1: 'How to Improve Your Google Rankings in 2026: The Tactical Playbook',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'Improve Google Rankings', url: `${BASE_URL}/how-to-improve-your-google-rankings-in-2026/` }
+    ]
+  },
+
+  '/blog/the-modern-seo-playbook': {
+    path: '/blog/the-modern-seo-playbook',
+    name: 'Modern SEO Playbook',
+    primaryKeyword: 'modern SEO playbook',
+    secondaryKeywords: ['generative engine optimization', 'AI overviews SEO', 'entity search'],
+    searchIntent: 'Informational',
+    seoTitle: 'Modern SEO Playbook: Ranking in AI Search | House Robotics', // 58 chars
+    metaDescription: 'Discover how AI Overviews and answer engines reshape search rankings, and learn how to optimize entity authority for generative search citations.', // 145 chars
+    canonicalUrl: `${BASE_URL}/blog/the-modern-seo-playbook`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'Modern SEO Playbook: Ranking in AI Search | House Robotics',
+    ogDescription: 'Discover how AI Overviews and answer engines reshape search rankings, and learn how to optimize entity authority for generative search citations.',
+    ogImage: `${BASE_URL}/images/blog-ai-search.svg`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Modern SEO Playbook: Ranking in AI Search | House Robotics',
+    twitterDescription: 'Discover how AI Overviews and answer engines reshape search rankings, and learn how to optimize entity authority for generative search citations.',
+    twitterImage: `${BASE_URL}/images/blog-ai-search.svg`,
+    h1: 'The Modern SEO Playbook: How AI Overviews Are Changing Search Rankings',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'Modern SEO Playbook', url: `${BASE_URL}/blog/the-modern-seo-playbook` }
+    ]
+  },
+
+  '/blog/practical-ai-automation': {
+    path: '/blog/practical-ai-automation',
+    name: 'Practical AI Automation Guide',
+    primaryKeyword: 'practical AI automation',
+    secondaryKeywords: ['business workflow automation', 'CRM AI webhooks', 'eliminate manual busywork'],
+    searchIntent: 'Informational',
+    seoTitle: 'Practical AI Automation for Businesses | House Robotics', // 55 chars
+    metaDescription: 'Learn how to connect sales and marketing channels directly to your CRM with practical AI automation workflows that eliminate repetitive busywork.', // 145 chars
+    canonicalUrl: `${BASE_URL}/blog/practical-ai-automation`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'Practical AI Automation for Businesses | House Robotics',
+    ogDescription: 'Learn how to connect sales and marketing channels directly to your CRM with practical AI automation workflows that eliminate repetitive busywork.',
+    ogImage: `${BASE_URL}/images/blog-autonomous-agents.svg`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Practical AI Automation for Businesses | House Robotics',
+    twitterDescription: 'Learn how to connect sales and marketing channels directly to your CRM with practical AI automation workflows that eliminate repetitive busywork.',
+    twitterImage: `${BASE_URL}/images/blog-autonomous-agents.svg`,
+    h1: 'Practical AI Automation: Replacing Busywork with Connected Workflows',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'Practical AI Automation', url: `${BASE_URL}/blog/practical-ai-automation` }
+    ]
+  },
+
+  '/blog/why-page-speed-is-the-ultimate-conversion-rate-multiplier': {
+    path: '/blog/why-page-speed-is-the-ultimate-conversion-rate-multiplier',
+    name: 'Why Page Speed Multiplies Conversions',
+    primaryKeyword: 'page speed conversion rate',
+    secondaryKeywords: ['Core Web Vitals CRO', 'website speed optimization', 'bounce rate reduction'],
+    searchIntent: 'Informational',
+    seoTitle: 'Why Page Speed Multiplies Conversions | House Robotics', // 54 chars
+    metaDescription: 'Discover why every 100ms delay hurts checkout rates and how modern, clean frontend stacks deliver superior Core Web Vitals and higher revenue.', // 142 chars
+    canonicalUrl: `${BASE_URL}/blog/why-page-speed-is-the-ultimate-conversion-rate-multiplier`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'Why Page Speed Multiplies Conversions | House Robotics',
+    ogDescription: 'Discover why every 100ms delay hurts checkout rates and how modern, clean frontend stacks deliver superior Core Web Vitals and higher revenue.',
+    ogImage: `${BASE_URL}/images/blog-react-perf.svg`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Why Page Speed Multiplies Conversions | House Robotics',
+    twitterDescription: 'Discover why every 100ms delay hurts checkout rates and how modern, clean frontend stacks deliver superior Core Web Vitals and higher revenue.',
+    twitterImage: `${BASE_URL}/images/blog-react-perf.svg`,
+    h1: 'Why Page Speed Is the Ultimate Conversion Rate Multiplier',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'Page Speed & Conversion', url: `${BASE_URL}/blog/why-page-speed-is-the-ultimate-conversion-rate-multiplier` }
+    ]
+  },
+
+  '/blog/google-ads-in-2026-eliminating-wasteful-spend': {
+    path: '/blog/google-ads-in-2026-eliminating-wasteful-spend',
+    name: 'Google Ads 2026 Strategy',
+    primaryKeyword: 'eliminate wasteful Google Ads spend',
+    secondaryKeywords: ['negative keyword lists', 'Google ads audit', 'reduce paid acquisition cost'],
+    searchIntent: 'Informational',
+    seoTitle: 'Google Ads Strategy: Cut Wasteful Ad Spend | House Robotics', // 59 chars
+    metaDescription: 'Audit broad-match keyword bleed, protect your ad budget, and acquire high-intent commercial buyers with precision negative keyword strategies.', // 142 chars
+    canonicalUrl: `${BASE_URL}/blog/google-ads-in-2026-eliminating-wasteful-spend`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'Google Ads Strategy: Cut Wasteful Ad Spend | House Robotics',
+    ogDescription: 'Audit broad-match keyword bleed, protect your ad budget, and acquire high-intent commercial buyers with precision negative keyword strategies.',
+    ogImage: `${BASE_URL}/images/blog-b2b-funnels.svg`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Google Ads Strategy: Cut Wasteful Ad Spend | House Robotics',
+    twitterDescription: 'Audit broad-match keyword bleed, protect your ad budget, and acquire high-intent commercial buyers with precision negative keyword strategies.',
+    twitterImage: `${BASE_URL}/images/blog-b2b-funnels.svg`,
+    h1: 'Google Ads in 2026: Eliminating Wasteful Spend with Precision Negative Lists',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'Google Ads 2026 Strategy', url: `${BASE_URL}/blog/google-ads-in-2026-eliminating-wasteful-spend` }
+    ]
+  },
+
+  '/blog/google-maps-3-pack-mastery': {
+    path: '/blog/google-maps-3-pack-mastery',
+    name: 'Google Maps 3-Pack Mastery',
+    primaryKeyword: 'Google Maps 3 pack mastery',
+    secondaryKeywords: ['local geo grid ranking', 'Google Business Profile 3-pack', 'local proximity SEO'],
+    searchIntent: 'Informational',
+    seoTitle: 'Google Maps 3-Pack Mastery & Local SEO | House Robotics', // 55 chars
+    metaDescription: 'Master the Google Maps 3-Pack with local geo-grid optimization, automated review velocity, and entity citations to dominate regional search.', // 140 chars
+    canonicalUrl: `${BASE_URL}/blog/google-maps-3-pack-mastery`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'Google Maps 3-Pack Mastery & Local SEO | House Robotics',
+    ogDescription: 'Master the Google Maps 3-Pack with local geo-grid optimization, automated review velocity, and entity citations to dominate regional search.',
+    ogImage: `${BASE_URL}/images/blog-local-maps.svg`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Google Maps 3-Pack Mastery & Local SEO | House Robotics',
+    twitterDescription: 'Master the Google Maps 3-Pack with local geo-grid optimization, automated review velocity, and entity citations to dominate regional search.',
+    twitterImage: `${BASE_URL}/images/blog-local-maps.svg`,
+    h1: 'Google Maps 3-Pack Mastery: Local Geo-Grid Dominance',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'Maps 3-Pack Mastery', url: `${BASE_URL}/blog/google-maps-3-pack-mastery` }
+    ]
+  },
+
+  '/blog/high-converting-short-form-video-systems': {
+    path: '/blog/high-converting-short-form-video-systems',
+    name: 'Short-Form Video Systems',
+    primaryKeyword: 'short form video marketing',
+    secondaryKeywords: ['TikTok marketing funnel', 'Instagram Reels for business', 'video conversion hooks'],
+    searchIntent: 'Informational',
+    seoTitle: 'Short-Form Video Systems That Convert | House Robotics', // 54 chars
+    metaDescription: 'Turn viral views into qualified pipeline. Learn the 3-second hook taxonomy and attribution workflows for high-converting short-form videos.', // 139 chars
+    canonicalUrl: `${BASE_URL}/blog/high-converting-short-form-video-systems`,
+    robots: 'index, follow',
+    ogType: 'article',
+    ogTitle: 'Short-Form Video Systems That Convert | House Robotics',
+    ogDescription: 'Turn viral views into qualified pipeline. Learn the 3-second hook taxonomy and attribution workflows for high-converting short-form videos.',
+    ogImage: `${BASE_URL}/images/blog-short-form.svg`,
+    twitterCard: 'summary_large_image',
+    twitterTitle: 'Short-Form Video Systems That Convert | House Robotics',
+    twitterDescription: 'Turn viral views into qualified pipeline. Learn the 3-second hook taxonomy and attribution workflows for high-converting short-form videos.',
+    twitterImage: `${BASE_URL}/images/blog-short-form.svg`,
+    h1: 'High-Converting Short-Form Video Systems for Modern Brands',
+    breadcrumbs: [
+      { name: 'Home', url: `${BASE_URL}/` },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: 'Short-Form Video Systems', url: `${BASE_URL}/blog/high-converting-short-form-video-systems` }
+    ]
+  },
+
   '/404': {
     path: '/404',
     name: '404 Not Found',
@@ -1164,15 +1979,140 @@ export function applyPageSeo(
           { name: slug.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '), url: `${BASE_URL}${cleanPath}` }
         ]
       };
+    } else if (cleanPath.startsWith('/usa/')) {
+      // Dynamic USA location page handling
+      const segments = cleanPath.split('/').filter(Boolean);
+      // segments[0] === 'usa'
+      const stateSegment = segments[1];
+      const citySegment = segments[2];
+      const serviceSegment = segments[3];
+
+      if (stateSegment && !citySegment) {
+        // State Overview Page
+        const stateName = stateSegment.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+        const seoTitle = `Web Dev, SEO & AI in ${stateName} | House Robotics`;
+        const metaDescription = `Scalable web development, technical SEO, and AI automation for businesses across ${stateName}. Remote excellence for commercial growth.`;
+        config = {
+          path: cleanPath,
+          name: `${stateName} Market Overview`,
+          primaryKeyword: `digital marketing and web development ${stateName}`,
+          secondaryKeywords: [`${stateName} SEO agency`, `${stateName} web development`, `AI automation ${stateName}`],
+          searchIntent: 'Commercial',
+          seoTitle,
+          metaDescription,
+          canonicalUrl: `${BASE_URL}${cleanPath}`,
+          robots: 'index, follow',
+          ogType: 'website',
+          ogTitle: seoTitle,
+          ogDescription: metaDescription,
+          ogImage: `${BASE_URL}/assets/home-hero-visual.webp`,
+          twitterCard: 'summary_large_image',
+          twitterTitle: seoTitle,
+          twitterDescription: metaDescription,
+          twitterImage: `${BASE_URL}/assets/home-hero-visual.webp`,
+          h1: `Digital Marketing, SEO & Web Development in ${stateName}`,
+          breadcrumbs: [
+            { name: 'Home', url: `${BASE_URL}/` },
+            { name: 'USA', url: `${BASE_URL}/usa` },
+            { name: stateName, url: `${BASE_URL}${cleanPath}` }
+          ]
+        };
+      } else if (stateSegment && citySegment && !serviceSegment) {
+        // City Overview Page
+        const stateCodeMap: Record<string, string> = {
+          'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR', 'california': 'CA',
+          'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE', 'district-of-columbia': 'DC', 'florida': 'FL',
+          'georgia': 'GA', 'hawaii': 'HI', 'idaho': 'ID', 'illinois': 'IL', 'indiana': 'IN',
+          'iowa': 'IA', 'kansas': 'KS', 'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME',
+          'maryland': 'MD', 'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN', 'mississippi': 'MS',
+          'missouri': 'MO', 'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV', 'new-hampshire': 'NH',
+          'new-jersey': 'NJ', 'new-mexico': 'NM', 'new-york': 'NY', 'north-carolina': 'NC', 'north-dakota': 'ND',
+          'ohio': 'OH', 'oklahoma': 'OK', 'oregon': 'OR', 'pennsylvania': 'PA', 'rhode-island': 'RI',
+          'south-carolina': 'SC', 'south-dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT',
+          'vermont': 'VT', 'virginia': 'VA', 'washington': 'WA', 'west-virginia': 'WV', 'wisconsin': 'WI',
+          'wyoming': 'WY'
+        };
+        const stCode = stateCodeMap[stateSegment] || stateSegment.toUpperCase();
+        const cityName = citySegment.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+        const seoTitle = `Web Dev, SEO & AI in ${cityName}, ${stCode} | House Robotics`;
+        const metaDescription = `Expand your commercial reach in ${cityName}, ${stCode} with custom web engineering, high-ranking SEO, and smart AI automation. Book a discovery call.`;
+        config = {
+          path: cleanPath,
+          name: `${cityName}, ${stCode} Profile`,
+          primaryKeyword: `web development and SEO ${cityName} ${stCode}`,
+          secondaryKeywords: [`${cityName} SEO services`, `${cityName} web design`, `AI automation ${cityName}`],
+          searchIntent: 'Commercial',
+          seoTitle,
+          metaDescription,
+          canonicalUrl: `${BASE_URL}${cleanPath}`,
+          robots: 'index, follow',
+          ogType: 'website',
+          ogTitle: seoTitle,
+          ogDescription: metaDescription,
+          ogImage: `${BASE_URL}/assets/home-hero-visual.webp`,
+          twitterCard: 'summary_large_image',
+          twitterTitle: seoTitle,
+          twitterDescription: metaDescription,
+          twitterImage: `${BASE_URL}/assets/home-hero-visual.webp`,
+          h1: `Custom Web Engineering, SEO & AI Automation in ${cityName}`,
+          breadcrumbs: [
+            { name: 'Home', url: `${BASE_URL}/` },
+            { name: 'USA', url: `${BASE_URL}/usa` },
+            { name: stateSegment.replace(/-/g, ' ').toUpperCase(), url: `${BASE_URL}/usa/${stateSegment}` },
+            { name: cityName, url: `${BASE_URL}${cleanPath}` }
+          ]
+        };
+      } else if (stateSegment && citySegment && serviceSegment) {
+        // City-Service Landing Page
+        const cityName = citySegment.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+        const serviceName = serviceSegment.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const seoTitle = `${serviceName} in ${cityName} | House Robotics`;
+        const metaDescription = `Explore ${serviceSegment.replace(/-/g, ' ')} in ${cityName} with custom technical execution and performance tracking tailored to your business goals.`;
+        config = {
+          path: cleanPath,
+          name: `${serviceName} in ${cityName}`,
+          primaryKeyword: `${serviceSegment.replace(/-/g, ' ')} ${cityName}`,
+          secondaryKeywords: [`${cityName} ${serviceSegment.replace(/-/g, ' ')}`, `${serviceName} agency`],
+          searchIntent: 'Commercial',
+          seoTitle,
+          metaDescription,
+          canonicalUrl: `${BASE_URL}${cleanPath}`,
+          robots: 'index, follow',
+          ogType: 'website',
+          ogTitle: seoTitle,
+          ogDescription: metaDescription,
+          ogImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+          twitterCard: 'summary_large_image',
+          twitterTitle: seoTitle,
+          twitterDescription: metaDescription,
+          twitterImage: `${BASE_URL}/assets/seo-page-hero.webp`,
+          h1: `${serviceName} Engineered for Businesses in ${cityName}`,
+          breadcrumbs: [
+            { name: 'Home', url: `${BASE_URL}/` },
+            { name: 'USA', url: `${BASE_URL}/usa` },
+            { name: stateSegment.replace(/-/g, ' ').toUpperCase(), url: `${BASE_URL}/usa/${stateSegment}` },
+            { name: cityName, url: `${BASE_URL}/usa/${stateSegment}/${citySegment}` },
+            { name: serviceName, url: `${BASE_URL}${cleanPath}` }
+          ]
+        };
+      } else {
+        config = SEO_METADATA_REGISTRY['/404'];
+      }
     } else {
       config = SEO_METADATA_REGISTRY['/404'];
     }
   }
 
+  // Normalize legacy override keys if passed
+  const cleanOverrides = { ...overrides } as any;
+  if (cleanOverrides.title && !cleanOverrides.seoTitle) cleanOverrides.seoTitle = cleanOverrides.title;
+  if (cleanOverrides.description && !cleanOverrides.metaDescription) cleanOverrides.metaDescription = cleanOverrides.description;
+  if (cleanOverrides.canonical && !cleanOverrides.canonicalUrl) cleanOverrides.canonicalUrl = cleanOverrides.canonical;
+
   // Merge any custom overrides (from CMS or props)
   const finalConfig: PageSeoConfig = {
     ...config,
-    ...(overrides || {})
+    ...cleanOverrides
   };
 
   // 1. Update Title Tag

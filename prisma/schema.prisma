@@ -25,6 +25,8 @@ model AdminUser {
 
   leadNotes            LeadNote[]
   activityLogs         ActivityLog[]
+  prospectNotes        ProspectNote[]
+  prospectActivities   ProspectActivity[]
 
   @@map("admin_users")
 }
@@ -262,12 +264,18 @@ model ContactMessage {
   email     String
   phone     String?
   company   String?
+  city      String?
+  state     String?
   service   String?
   budget    String?
   message   String
-  status    String   @default("UNREAD") // UNREAD, READ, REPLIED, ARCHIVED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  websiteUrl     String?
+  timeline       String?
+  serviceDetails String?
+  consentGiven   Boolean  @default(true)
+  status         String   @default("UNREAD") // UNREAD, READ, REPLIED, ARCHIVED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([email])
   @@index([status])
@@ -276,26 +284,48 @@ model ContactMessage {
 }
 
 model Lead {
-  id         String     @id @default(uuid())
-  inquiryId  String?    @unique
-  name       String
-  email      String
-  phone      String?
-  company    String?
-  service    String?
-  budget     String?
-  message    String?
-  source     String     @default("Website") // Website, Contact Form, WhatsApp, Google, PPC, etc.
-  status     String     @default("NEW") // NEW, CONTACTED, QUALIFIED, PROPOSAL_SENT, WON, LOST
-  assignedTo String?
-  score      Int        @default(50)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id             String              @id @default(uuid())
+  inquiryId      String?             @unique
+  name           String
+  email          String
+  phone          String?
+  company        String?
+  websiteUrl     String?
+  city           String?
+  state          String?
+  service        String?
+  budget         String?
+  timeline       String?
+  message        String?
+  serviceDetails String?
+  pageUrl        String?
+  referrer       String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  utmContent     String?
+  utmTerm        String?
+  source         String              @default("Website") // Website, Contact Form, WhatsApp, Google, PPC, etc.
+  status         String              @default("NEW") // NEW, CONTACTED, QUALIFIED, PROPOSAL_SENT, WON, LOST
+  assignedTo     String?
+  score          Int                 @default(50)
+  followUpDate   DateTime?
+  followUpStatus String              @default("NONE") // NONE, PENDING, TODAY, OVERDUE, COMPLETED
+  followUpNote   String?
+  consentGiven   Boolean             @default(true)
+  prospectId     String?
+  prospect       Prospect?           @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
-  notes      LeadNote[]
+  notes          LeadNote[]
+  communications LeadCommunication[]
 
   @@index([email])
+  @@index([prospectId])
   @@index([status])
+  @@index([followUpStatus])
+  @@index([followUpDate])
   @@index([createdAt])
   @@map("leads")
 }
@@ -312,6 +342,27 @@ model LeadNote {
 
   @@index([leadId])
   @@map("lead_notes")
+}
+
+model LeadCommunication {
+  id           String    @id @default(uuid())
+  leadId       String
+  lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type         String    // ADMIN_NOTIFICATION, AUTO_CONFIRMATION, FOLLOW_UP_REMINDER, MANUAL_DISPATCH
+  channel      String    @default("EMAIL") // EMAIL, WHATSAPP, INTERNAL
+  recipient    String
+  subject      String?
+  content      String?
+  status       String    @default("LOGGED") // LOGGED, SENT, FAILED, SCHEDULED
+  errorMessage String?
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([leadId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("lead_communications")
 }
 
 model NewsletterSubscriber {
@@ -428,3 +479,235 @@ model ActivityLog {
   @@index([timestamp])
   @@map("activity_logs")
 }
+
+model UsaState {
+  id               String    @id @default(uuid())
+  name             String
+  code             String    @unique
+  slug             String    @unique
+  region           String
+  capital          String
+  majorIndustries  String
+  economicOverview String
+  seoTitle         String?
+  metaDescription  String?
+  status           String    @default("PUBLISHED")
+  sortOrder        Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  cities           UsaCity[]
+
+  @@map("usa_states")
+}
+
+model UsaCity {
+  id                 String    @id @default(uuid())
+  stateId            String
+  stateSlug          String
+  name               String
+  slug               String
+  county             String
+  metroArea          String
+  population         Int       @default(0)
+  populationYear     String    @default("2023 US Census")
+  majorIndustries    String
+  digitalDemandTier  String    @default("High")
+  priorityTier       Int       @default(1)
+  commercialProfile  String
+  remoteDeliveryFit  String
+  seoTitle           String?
+  metaDescription    String?
+  focusKeyword       String?
+  status             String    @default("PUBLISHED")
+  sortOrder          Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  state              UsaState  @relation(fields: [stateId], references: [id], onDelete: Cascade)
+
+  @@unique([stateSlug, slug])
+  @@index([priorityTier])
+  @@index([status])
+  @@map("usa_cities")
+}
+
+model UsaLocationPage {
+  id                        String    @id @default(uuid())
+  pageType                  String    @default("CITY_SERVICE") // USA_HUB, STATE_OVERVIEW, CITY_OVERVIEW, CITY_SERVICE
+  stateSlug                 String
+  citySlug                  String?
+  serviceSlug               String?
+  urlPath                   String    @unique
+  h1Title                   String
+  heroKicker                String?
+  heroSubtitle              String?
+  metaTitle                 String
+  metaDescription           String
+  focusKeyword              String?
+  secondaryKeywords         String?
+  canonicalUrl              String?
+  ogTitle                   String?
+  ogDescription             String?
+  ogImage                   String?
+  contentIntro              String
+  localIndustryFocus        String?   // JSON string
+  businessProblemsSolved    String?   // JSON string
+  serviceDeliverables       String?   // JSON string
+  suitableCustomerTypes     String?   // JSON string
+  remoteCollaborationModel  String?
+  processSteps              String?   // JSON string
+  illustrativeScenarios     String?   // JSON string
+  faqs                      String?   // JSON string
+  qualityGatePassed         Boolean   @default(true)
+  qualityReviewNotes        String?
+  verifiedAt                DateTime?
+  status                    String    @default("PUBLISHED") // DRAFT, PUBLISHED, ARCHIVED
+  noIndex                   Boolean   @default(false)
+  leadsCount                Int       @default(0)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  @@index([pageType])
+  @@index([stateSlug])
+  @@index([citySlug])
+  @@index([serviceSlug])
+  @@index([status])
+  @@map("usa_location_pages")
+}
+
+// Phase 5: USA Prospect Management & Outreach Automation
+model Prospect {
+  id                  String                    @id @default(uuid())
+  businessName        String
+  websiteUrl          String
+  normalizedDomain    String
+  category            String?
+  city                String?
+  state               String?
+  country             String                    @default("USA")
+  contactPageUrl      String?
+  email               String?
+  phone               String?
+  sourceUrl           String?
+  sourceType          String                    @default("MANUAL_RESEARCH") // MANUAL_RESEARCH, PUBLIC_DIRECTORY, CSV_IMPORT, REFERRAL
+  researchDate        DateTime?
+  potentialServiceFit String                    @default("Web Development") // SEO, Web Development, Digital Marketing, E-commerce, AI Automation, Other
+  benefitReason       String?
+  priority            String                    @default("MEDIUM") // HIGH, MEDIUM, LOW
+  confidence          String                    @default("INFERRED") // VERIFIED, NEEDS_REVIEW, INFERRED
+  status              String                    @default("NEW") // NEW, RESEARCHED, QUALIFIED, READY_FOR_OUTREACH, CONTACTED, REPLIED, MEETING_REQUESTED, PROPOSAL_SENT, WON, LOST, DO_NOT_CONTACT
+  followUpDate        DateTime?
+  followUpStatus      String                    @default("NONE") // NONE, PENDING, TODAY, OVERDUE, COMPLETED
+  followUpNote        String?
+  internalNotes       String?
+  convertedLeadId     String?
+  convertedAt         DateTime?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  notes               ProspectNote[]
+  activities          ProspectActivity[]
+  campaignMembers     ProspectCampaignMember[]
+  leads               Lead[]
+
+  @@index([normalizedDomain])
+  @@index([status])
+  @@index([priority])
+  @@index([potentialServiceFit])
+  @@index([city])
+  @@index([state])
+  @@index([followUpDate])
+  @@index([createdAt])
+  @@map("prospects")
+}
+
+model ProspectNote {
+  id         String     @id @default(uuid())
+  prospectId String
+  prospect   Prospect   @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  adminId    String?
+  admin      AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  authorName String     @default("Admin")
+  note       String
+  createdAt  DateTime   @default(now())
+
+  @@index([prospectId])
+  @@map("prospect_notes")
+}
+
+model ProspectActivity {
+  id           String     @id @default(uuid())
+  prospectId   String
+  prospect     Prospect   @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  adminId      String?
+  admin        AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  authorName   String     @default("Admin")
+  activityType String     // EMAIL_DRAFTED, EMAIL_SENT_MANUAL, CONTACT_FORM_SUBMITTED, PHONE_CALL, LINKEDIN_INTERACTION, REPLY_RECEIVED, MEETING_BOOKED, PROPOSAL_SENT, STATUS_CHANGED, NOTE_ADDED
+  channel      String?    // EMAIL, CONTACT_FORM, PHONE, LINKEDIN, VIDEO_CALL, IN_PERSON
+  subject      String?
+  content      String?
+  outcome      String?    // NO_REPLY, INTERESTED, NOT_INTERESTED, MEETING_SCHEDULED, PROPOSAL_REQUESTED, DO_NOT_CONTACT
+  nextFollowUp DateTime?
+  performedAt  DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+
+  @@index([prospectId])
+  @@index([activityType])
+  @@index([createdAt])
+  @@map("prospect_activities")
+}
+
+model ProspectCampaign {
+  id              String                   @id @default(uuid())
+  name            String
+  goal            String?
+  service         String?
+  city            String?
+  state           String?
+  category        String?
+  targetAudience  String?
+  messageTemplate String?
+  status          String                   @default("DRAFT") // DRAFT, UNDER_REVIEW, APPROVED, ACTIVE, PAUSED, COMPLETED
+  startDate       DateTime?
+  endDate         DateTime?
+  notes           String?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  members         ProspectCampaignMember[]
+
+  @@index([status])
+  @@index([service])
+  @@map("prospect_campaigns")
+}
+
+model ProspectCampaignMember {
+  id         String           @id @default(uuid())
+  campaignId String
+  campaign   ProspectCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  prospectId String
+  prospect   Prospect         @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  status     String           @default("PLANNED") // PLANNED, DRAFTED, CONTACTED, REPLIED, CONVERTED, EXCLUDED
+  assignedAt DateTime         @default(now())
+
+  @@unique([campaignId, prospectId])
+  @@index([campaignId])
+  @@index([prospectId])
+  @@map("prospect_campaign_members")
+}
+
+model SuppressedContact {
+  id        String   @id @default(uuid())
+  email     String?
+  domain    String?
+  reason    String   // DO_NOT_CONTACT_REQUEST, UNSUBSCRIBED, INVALID, BOUNCED, INTERNAL_EXCLUSION
+  source    String?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([domain])
+  @@map("suppressed_contacts")
+}
+
+

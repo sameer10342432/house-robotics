@@ -3,6 +3,7 @@ import { ArrowRight, MessageSquare, Mail, Sparkles, CheckCircle2 } from 'lucide-
 import { AGENCY_INFO } from '../data/agencyData';
 import { ScrollReveal } from './ScrollReveal';
 import { DecorativeBackground } from './DecorativeBackground';
+import { apiTrackEvent } from '../utils/api';
 
 interface CTASectionProps {
   onOpenConsultation: () => void;
@@ -46,7 +47,10 @@ export const CTASection: React.FC<CTASectionProps> = ({ onOpenConsultation }) =>
         <ScrollReveal direction="fade-up" delay={350}>
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={onOpenConsultation}
+              onClick={() => {
+                apiTrackEvent({ eventType: 'CTA_CLICK', eventName: 'CTA Section Consultation Open', pageUrl: window.location.pathname });
+                onOpenConsultation();
+              }}
               className="btn-micro w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-[#6D28D9] hover:bg-[#5B21B6] text-white text-sm font-bold shadow-[0_10px_25px_rgba(109,40,217,0.25)] transition-all hover:-translate-y-0.5"
             >
               <span>Get a Free Consultation</span>
@@ -57,6 +61,9 @@ export const CTASection: React.FC<CTASectionProps> = ({ onOpenConsultation }) =>
               href={AGENCY_INFO.whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                apiTrackEvent({ eventType: 'WHATSAPP_CLICK', eventName: 'CTA Section WhatsApp Click', pageUrl: window.location.pathname });
+              }}
               className="btn-micro w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white hover:bg-[#FAF9FF] text-neutral-900 text-sm font-bold border border-[#E9E7F2] shadow-xs transition-all hover:-translate-y-0.5"
             >
               <MessageSquare className="w-4 h-4 text-emerald-600 btn-arrow" />

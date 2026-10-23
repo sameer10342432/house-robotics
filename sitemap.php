@@ -54,12 +54,26 @@ $staticRoutes = [
     ['path' => '/blog/google-ads-in-2026-eliminating-wasteful-spend', 'priority' => '0.7', 'changefreq' => 'monthly'],
     ['path' => '/blog/google-maps-3-pack-mastery', 'priority' => '0.7', 'changefreq' => 'monthly'],
     ['path' => '/blog/high-converting-short-form-video-systems', 'priority' => '0.7', 'changefreq' => 'monthly'],
+    // USA National SEO Hub
+    ['path' => '/usa', 'priority' => '0.9', 'changefreq' => 'weekly'],
 ];
 
 try {
     $posts = Database::fetchAll("SELECT slug, canonical_url, published_at, updated_at FROM blog_posts WHERE status = 'PUBLISHED' AND no_index = 0");
 } catch (Throwable $e) {
     $posts = [];
+}
+
+try {
+    $states = Database::fetchAll("SELECT slug, updated_at FROM usa_states WHERE status = 'PUBLISHED'");
+} catch (Throwable $e) {
+    $states = [];
+}
+
+try {
+    $locationPages = Database::fetchAll("SELECT url_path, canonical_url, updated_at FROM usa_location_pages WHERE status = 'PUBLISHED' AND no_index = 0");
+} catch (Throwable $e) {
+    $locationPages = [];
 }
 
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -90,6 +104,37 @@ foreach ($posts as $p) {
     echo "    <lastmod>{$lastmod}</lastmod>\n";
     echo "    <changefreq>monthly</changefreq>\n";
     echo "    <priority>0.7</priority>\n";
+    echo "  </url>\n";
+}
+
+foreach ($states as $st) {
+    $slug = $st['slug'] ?? '';
+    if (empty($slug)) continue;
+    $loc = "{$baseUrl}/usa/{$slug}";
+    if (isset($emitted[$loc])) continue;
+    $emitted[$loc] = true;
+    $lastmod = date('Y-m-d', strtotime($st['updated_at'] ?? 'now'));
+    echo "  <url>\n";
+    echo "    <loc>{$loc}</loc>\n";
+    echo "    <lastmod>{$lastmod}</lastmod>\n";
+    echo "    <changefreq>weekly</changefreq>\n";
+    echo "    <priority>0.8</priority>\n";
+    echo "  </url>\n";
+}
+
+foreach ($locationPages as $lp) {
+    $path = $lp['url_path'] ?? '';
+    if (empty($path)) continue;
+    $customCanonical = $lp['canonical_url'] ?? '';
+    $loc = !empty($customCanonical) ? $customCanonical : "{$baseUrl}{$path}";
+    if (isset($emitted[$loc])) continue;
+    $emitted[$loc] = true;
+    $lastmod = date('Y-m-d', strtotime($lp['updated_at'] ?? 'now'));
+    echo "  <url>\n";
+    echo "    <loc>{$loc}</loc>\n";
+    echo "    <lastmod>{$lastmod}</lastmod>\n";
+    echo "    <changefreq>weekly</changefreq>\n";
+    echo "    <priority>0.85</priority>\n";
     echo "  </url>\n";
 }
 

@@ -11,3 +11,5 @@ cpanel_production/
 config/config.local.php
 database/*.sqlite
 database/*.sqlite-journal
+scratch/
+cpanel_production*/

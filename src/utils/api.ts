@@ -63,6 +63,12 @@ export async function submitContact(payload: {
   budget?: string;
   message: string;
   source?: string;
+  city?: string;
+  state?: string;
+  pageUrl?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
 }) {
   return apiRequest<{ id: string; inquiryId: string }>('/contact', {
     method: 'POST',
@@ -298,12 +304,15 @@ export async function adminGetDashboard() {
   };
 }
 
-// Leads CRM
 export async function adminGetLeads(params: {
   status?: string;
   search?: string;
   service?: string;
   source?: string;
+  city?: string;
+  state?: string;
+  followUp?: string;
+  dateRange?: string;
   page?: number;
   limit?: number;
 } = {}) {
@@ -312,6 +321,10 @@ export async function adminGetLeads(params: {
   if (params.search) query.append('search', params.search);
   if (params.service) query.append('service', params.service);
   if (params.source) query.append('source', params.source);
+  if (params.city) query.append('city', params.city);
+  if (params.state) query.append('state', params.state);
+  if (params.followUp) query.append('followUp', params.followUp);
+  if (params.dateRange) query.append('dateRange', params.dateRange);
   if (params.page) query.append('page', String(params.page));
   if (params.limit) query.append('limit', String(params.limit));
 
@@ -323,6 +336,37 @@ export async function adminUpdateLeadStatus(id: string, status: string) {
     method: 'PATCH',
     body: JSON.stringify({ status })
   });
+}
+
+export async function adminScheduleFollowUp(id: string, data: { followUpDate: string; followUpNote?: string }) {
+  return apiRequest(`/admin/leads/${id}/followup`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function adminCompleteFollowUp(id: string) {
+  return apiRequest(`/admin/leads/${id}/followup/complete`, {
+    method: 'PATCH'
+  });
+}
+
+export async function adminExportLeadsCsv(params: {
+  status?: string;
+  service?: string;
+  source?: string;
+  followUp?: string;
+  search?: string;
+} = {}) {
+  const query = new URLSearchParams();
+  if (params.status && params.status !== 'ALL') query.append('status', params.status);
+  if (params.service && params.service !== 'ALL') query.append('service', params.service);
+  if (params.source && params.source !== 'ALL') query.append('source', params.source);
+  if (params.followUp && params.followUp !== 'ALL') query.append('followUp', params.followUp);
+  if (params.search) query.append('search', params.search);
+
+  const url = `${API_BASE_URL}/admin/leads/export?${query.toString()}`;
+  window.open(url, '_blank');
 }
 
 export async function adminAddLeadNote(id: string, note: string) {
@@ -705,3 +749,284 @@ export async function adminUpdateUser(id: string, data: any) {
 export async function adminDeleteUser(id: string) {
   return apiRequest(`/admin/users/${id}`, { method: 'DELETE' });
 }
+
+// =============================================================================
+// USA LOCATIONS & NATIONAL SEO API
+// =============================================================================
+
+export async function fetchLocationsHub() {
+  return apiRequest<any>('/locations/hub');
+}
+
+export async function fetchLocationsStates() {
+  return apiRequest<any[]>('/locations/states');
+}
+
+export async function fetchLocationState(stateSlug: string) {
+  return apiRequest<any>(`/locations/state/${stateSlug}`);
+}
+
+export async function fetchLocationCity(stateSlug: string, citySlug: string) {
+  return apiRequest<any>(`/locations/city/${stateSlug}/${citySlug}`);
+}
+
+export async function fetchLocationPage(stateSlug: string, citySlug: string, serviceSlug: string, preview: boolean = false) {
+  return apiRequest<any>(`/locations/page/${stateSlug}/${citySlug}/${serviceSlug}${preview ? '?preview=true' : ''}`);
+}
+
+export async function adminGetLocations(params: { state?: string; status?: string; search?: string; page?: number; limit?: number } = {}) {
+  const query = new URLSearchParams();
+  if (params.state) query.append('state', params.state);
+  if (params.status) query.append('status', params.status);
+  if (params.search) query.append('search', params.search);
+  if (params.page) query.append('page', String(params.page));
+  if (params.limit) query.append('limit', String(params.limit));
+
+  return apiRequest<any>(`/admin/locations?${query.toString()}`);
+}
+
+export async function adminGetLocationStats() {
+  return apiRequest<any>('/admin/locations/stats');
+}
+
+export async function adminCreateLocationPage(data: any) {
+  return apiRequest('/admin/locations/page', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function adminUpdateLocationPage(id: string, data: any) {
+  return apiRequest(`/admin/locations/page/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function adminDeleteLocationPage(id: string) {
+  return apiRequest(`/admin/locations/page/${id}`, { method: 'DELETE' });
+}
+
+export async function adminSaveLocationPage(data: any) {
+  if (data.id) {
+    return adminUpdateLocationPage(data.id, data);
+  }
+  return adminCreateLocationPage(data);
+}
+
+// Analytics Event Telemetry (Privacy-Compliant)
+export async function apiTrackEvent(payload: {
+  eventType: 'PAGE_VIEW' | 'CTA_CLICK' | 'WHATSAPP_CLICK' | 'PHONE_CLICK' | 'FORM_SUBMIT' | 'NEWSLETTER_SUBMIT';
+  eventName: string;
+  pageUrl?: string;
+  referrer?: string;
+  metadata?: Record<string, any>;
+}): Promise<{ success: boolean }> {
+  try {
+    return await apiRequest('/analytics/event', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  } catch {
+    return { success: false };
+  }
+}
+
+// Admin SEO & Lead Reporting
+export async function adminGetReports(params: {
+  dateRange?: string;
+  service?: string;
+  city?: string;
+  state?: string;
+  status?: string;
+  pageUrl?: string;
+} = {}) {
+  const query = new URLSearchParams();
+  if (params.dateRange) query.append('dateRange', params.dateRange);
+  if (params.service) query.append('service', params.service);
+  if (params.city) query.append('city', params.city);
+  if (params.state) query.append('state', params.state);
+  if (params.status) query.append('status', params.status);
+  if (params.pageUrl) query.append('pageUrl', params.pageUrl);
+
+  return apiRequest<any>(`/admin/reports?${query.toString()}`);
+}
+
+// =========================================================================
+// Phase 5: USA Prospect Management & Outreach Automation APIs
+// =========================================================================
+export async function adminGetProspects(params: {
+  status?: string;
+  service?: string;
+  priority?: string;
+  confidence?: string;
+  city?: string;
+  state?: string;
+  followUp?: string;
+  dateRange?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+} = {}) {
+  const query = new URLSearchParams();
+  if (params.status) query.append('status', params.status);
+  if (params.service) query.append('service', params.service);
+  if (params.priority) query.append('priority', params.priority);
+  if (params.confidence) query.append('confidence', params.confidence);
+  if (params.city) query.append('city', params.city);
+  if (params.state) query.append('state', params.state);
+  if (params.followUp) query.append('followUp', params.followUp);
+  if (params.dateRange) query.append('dateRange', params.dateRange);
+  if (params.search) query.append('search', params.search);
+  if (params.page) query.append('page', String(params.page));
+  if (params.limit) query.append('limit', String(params.limit));
+
+  return apiRequest<any>(`/admin/prospects?${query.toString()}`);
+}
+
+export async function adminGetProspect(id: string) {
+  return apiRequest<any>(`/admin/prospects/${id}`);
+}
+
+export async function adminCreateProspect(data: any) {
+  return apiRequest<any>('/admin/prospects', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function adminUpdateProspect(id: string, data: any) {
+  return apiRequest<any>(`/admin/prospects/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function adminDeleteProspect(id: string) {
+  return apiRequest<any>(`/admin/prospects/${id}`, { method: 'DELETE' });
+}
+
+export async function adminImportProspectsCsv(prospects: any[], duplicateHandling: 'SKIP' | 'FLAG' | 'OVERWRITE' = 'SKIP') {
+  return apiRequest<any>('/admin/prospects/import', {
+    method: 'POST',
+    body: JSON.stringify({ prospects, duplicateHandling })
+  });
+}
+
+export async function adminExportProspectsCsv(params: Record<string, string> = {}) {
+  const query = new URLSearchParams(params).toString();
+  const token = localStorage.getItem('house_robotics_admin_token') || sessionStorage.getItem('house_robotics_admin_token');
+  const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
+  const url = `${baseUrl}/admin/prospects/export?${query}`;
+
+  const res = await fetch(url, {
+    headers: {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    }
+  });
+
+  if (!res.ok) throw new Error('Failed to export prospects CSV');
+  const blob = await res.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.download = `house-robotics-prospects-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(downloadUrl);
+}
+
+export async function adminAddProspectNote(id: string, note: string) {
+  return apiRequest<any>(`/admin/prospects/${id}/notes`, {
+    method: 'POST',
+    body: JSON.stringify({ note })
+  });
+}
+
+export async function adminScheduleProspectFollowUp(id: string, followUpDate: string, followUpNote?: string) {
+  return apiRequest<any>(`/admin/prospects/${id}/followup`, {
+    method: 'POST',
+    body: JSON.stringify({ followUpDate, followUpNote })
+  });
+}
+
+export async function adminCompleteProspectFollowUp(id: string) {
+  return apiRequest<any>(`/admin/prospects/${id}/followup/complete`, { method: 'PATCH' });
+}
+
+export async function adminLogProspectActivity(id: string, activity: {
+  activityType: string;
+  channel?: string;
+  subject?: string;
+  content?: string;
+  outcome?: string;
+  nextFollowUp?: string;
+}) {
+  return apiRequest<any>(`/admin/prospects/${id}/activities`, {
+    method: 'POST',
+    body: JSON.stringify(activity)
+  });
+}
+
+export async function adminGenerateProspectDraft(id: string, options: {
+  service?: string;
+  channel?: string;
+  tone?: string;
+  observedOpportunity?: string;
+  proposedValue?: string;
+  desiredNextStep?: string;
+}) {
+  return apiRequest<any>(`/admin/prospects/${id}/draft`, {
+    method: 'POST',
+    body: JSON.stringify(options)
+  });
+}
+
+export async function adminConvertProspectToLead(id: string, data: {
+  service?: string;
+  budget?: string;
+  timeline?: string;
+  notes?: string;
+}) {
+  return apiRequest<any>(`/admin/prospects/${id}/convert`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function adminGetProspectReportsSummary() {
+  return apiRequest<any>('/admin/prospects/reports/summary');
+}
+
+export async function adminGetProspectCampaigns() {
+  return apiRequest<any>('/admin/prospects/campaigns/list');
+}
+
+export async function adminCreateProspectCampaign(data: any) {
+  return apiRequest<any>('/admin/prospects/campaigns/create', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function adminAssignProspectsToCampaign(campaignId: string, prospectIds: string[]) {
+  return apiRequest<any>(`/admin/prospects/campaigns/${campaignId}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ prospectIds })
+  });
+}
+
+export async function adminGetSuppressions() {
+  return apiRequest<any>('/admin/prospects/suppressions/list');
+}
+
+export async function adminAddSuppression(data: { email?: string; domain?: string; reason: string }) {
+  return apiRequest<any>('/admin/prospects/suppressions/add', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+
+

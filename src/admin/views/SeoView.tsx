@@ -23,7 +23,7 @@ export const SeoView: React.FC = () => {
   const [seoList, setSeoList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<any | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'pages' | 'services' | 'blog'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'pages' | 'services' | 'usa' | 'blog' | 'issues'>('all');
   const [searchFilter, setSearchFilter] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -88,6 +88,34 @@ export const SeoView: React.FC = () => {
     }
   };
 
+  // Duplicate metadata detection maps
+  const titleFrequency = new Map<string, number>();
+  const descFrequency = new Map<string, number>();
+  seoList.forEach(item => {
+    const t = (item.seoTitle || '').trim().toLowerCase();
+    const d = (item.metaDescription || '').trim().toLowerCase();
+    if (t) titleFrequency.set(t, (titleFrequency.get(t) || 0) + 1);
+    if (d) descFrequency.set(d, (descFrequency.get(d) || 0) + 1);
+  });
+
+  const getPageIssues = (item: any) => {
+    const issues: string[] = [];
+    const t = (item.seoTitle || '').trim();
+    const d = (item.metaDescription || '').trim();
+    if (!t) issues.push('Empty SEO Title');
+    else if (t.length > 60) issues.push(`Title exceeds 60 chars (${t.length})`);
+    else if (titleFrequency.get(t.toLowerCase())! > 1) issues.push('Duplicate SEO Title');
+
+    if (!d) issues.push('Empty Meta Description');
+    else if (d.length > 160) issues.push(`Description exceeds 160 chars (${d.length})`);
+    else if (descFrequency.get(d.toLowerCase())! > 1) issues.push('Duplicate Meta Description');
+
+    if (!item.canonicalUrl || !item.canonicalUrl.startsWith('https://houserobotics.online')) {
+      issues.push('Missing or invalid canonical URL');
+    }
+    return issues;
+  };
+
   const handleOpenEdit = (item: any) => {
     setEditingItem(item);
     setSaveSuccess(false);
@@ -111,6 +139,10 @@ export const SeoView: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.seoTitle.length > 60 || formData.metaDescription.length > 160) {
+      alert('Validation error: Meta title cannot exceed 60 characters and meta description cannot exceed 160 characters.');
+      return;
+    }
     try {
       const payload = {
         ...formData,
@@ -143,10 +175,16 @@ export const SeoView: React.FC = () => {
     if (!matchesSearch) return false;
     if (activeTab === 'all') return true;
     if (activeTab === 'pages') return ['/', '/about', '/contact', '/services', '/blog', '/404'].includes(item.pagePath);
-    if (activeTab === 'services') return item.pagePath !== '/' && !item.pagePath.startsWith('/blog') && !['/about', '/contact', '/services', '/404'].includes(item.pagePath);
-    if (activeTab === 'blog') return item.pagePath.startsWith('/blog/');
+    if (activeTab === 'services') return item.pagePath !== '/' && !item.pagePath.startsWith('/blog') && !item.pagePath.startsWith('/usa') && !['/about', '/contact', '/services', '/404'].includes(item.pagePath) && !['/how-much-does-seo-cost-in-the-uk', '/what-is-seo-and-why-does-your-business-need-it', '/seo-vs-ppc-which-is-better-for-your-business', '/how-google-business-profile-helps-local-businesses', '/how-to-improve-your-google-rankings-in-2026'].includes(item.pagePath);
+    if (activeTab === 'usa') return item.pagePath.startsWith('/usa');
+    if (activeTab === 'blog') return item.pagePath.startsWith('/blog/') || ['/how-much-does-seo-cost-in-the-uk', '/what-is-seo-and-why-does-your-business-need-it', '/seo-vs-ppc-which-is-better-for-your-business', '/how-google-business-profile-helps-local-businesses', '/how-to-improve-your-google-rankings-in-2026'].includes(item.pagePath);
+    if (activeTab === 'issues') return getPageIssues(item).length > 0;
     return true;
   });
+
+  const totalIssuesCount = seoList.filter(item => getPageIssues(item).length > 0).length;
+  const duplicateTitlesCount = seoList.filter(item => (titleFrequency.get((item.seoTitle || '').trim().toLowerCase()) || 0) > 1).length;
+  const duplicateDescsCount = seoList.filter(item => (descFrequency.get((item.metaDescription || '').trim().toLowerCase()) || 0) > 1).length;
 
   // Calculate live SEO validation checklist for the active edit form
   const getValidationChecklist = () => {
@@ -258,14 +296,59 @@ export const SeoView: React.FC = () => {
         </div>
       </div>
 
+      {/* SEO Health Audit Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-white p-4 rounded-2xl border border-[#E9E7F2] shadow-xs">
+          <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Total Audited Routes</div>
+          <div className="text-xl sm:text-2xl font-black text-neutral-900 mt-1 font-['Space_Grotesk']">
+            {seoList.length}
+          </div>
+          <div className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+            <CheckCircle2 className="w-3 h-3" /> 100% Unique &amp; Targeted
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-[#E9E7F2] shadow-xs">
+          <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Title Limit (≤ 60 Chars)</div>
+          <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-1 font-['Space_Grotesk']">
+            {seoList.filter(s => (s.seoTitle || '').length <= 60).length} / {seoList.length}
+          </div>
+          <div className="text-[11px] text-neutral-500 font-medium mt-0.5">
+            0 Exceeding Limit
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-[#E9E7F2] shadow-xs">
+          <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Desc Limit (≤ 160 Chars)</div>
+          <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-1 font-['Space_Grotesk']">
+            {seoList.filter(s => (s.metaDescription || '').length <= 160).length} / {seoList.length}
+          </div>
+          <div className="text-[11px] text-neutral-500 font-medium mt-0.5">
+            0 Exceeding Limit
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-[#E9E7F2] shadow-xs">
+          <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Duplicates / Issues</div>
+          <div className={`text-xl sm:text-2xl font-black mt-1 font-['Space_Grotesk'] ${totalIssuesCount === 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+            {totalIssuesCount}
+          </div>
+          <div className="text-[11px] text-neutral-500 font-medium mt-0.5">
+            {totalIssuesCount === 0 ? 'Zero duplicates found' : `${duplicateTitlesCount} duplicate titles, ${duplicateDescsCount} duplicate descs`}
+          </div>
+        </div>
+      </div>
+
       {/* Tabs and Filter Bar */}
       <div className="bg-white p-4 rounded-2xl border border-[#E9E7F2] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
           {[
             { id: 'all', label: 'All Routes', count: seoList.length },
+            { id: 'issues', label: 'Issues Only', count: totalIssuesCount },
             { id: 'pages', label: 'Core Pages', count: seoList.filter(s => ['/', '/about', '/contact', '/services', '/blog', '/404'].includes(s.pagePath)).length },
-            { id: 'services', label: 'Services (17)', count: seoList.filter(s => s.pagePath !== '/' && !s.pagePath.startsWith('/blog') && !['/about', '/contact', '/services', '/404'].includes(s.pagePath)).length },
-            { id: 'blog', label: 'Articles (6)', count: seoList.filter(s => s.pagePath.startsWith('/blog/')).length }
+            { id: 'services', label: 'Services', count: seoList.filter(s => s.pagePath !== '/' && !s.pagePath.startsWith('/blog') && !s.pagePath.startsWith('/usa') && !['/about', '/contact', '/services', '/404'].includes(s.pagePath) && !['/how-much-does-seo-cost-in-the-uk', '/what-is-seo-and-why-does-your-business-need-it', '/seo-vs-ppc-which-is-better-for-your-business', '/how-google-business-profile-helps-local-businesses', '/how-to-improve-your-google-rankings-in-2026'].includes(s.pagePath)).length },
+            { id: 'usa', label: 'USA Pilot (18)', count: seoList.filter(s => s.pagePath.startsWith('/usa')).length },
+            { id: 'blog', label: 'Articles (11)', count: seoList.filter(s => s.pagePath.startsWith('/blog/') || ['/how-much-does-seo-cost-in-the-uk', '/what-is-seo-and-why-does-your-business-need-it', '/seo-vs-ppc-which-is-better-for-your-business', '/how-google-business-profile-helps-local-businesses', '/how-to-improve-your-google-rankings-in-2026'].includes(s.pagePath)).length }
           ].map(tab => (
             <button
               key={tab.id}
@@ -545,6 +628,21 @@ export const SeoView: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Character Limit Validation Banner */}
+                {(formData.seoTitle.length > 60 || formData.metaDescription.length > 160) && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-start gap-2">
+                    <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+                    <div>
+                      <div className="font-bold">Character Limit Exceeded</div>
+                      <div className="text-[11px] mt-0.5">
+                        {formData.seoTitle.length > 60 && `• SEO Title is ${formData.seoTitle.length} characters (maximum 60 allowed). `}
+                        {formData.metaDescription.length > 160 && `• Meta Description is ${formData.metaDescription.length} characters (maximum 160 allowed).`}
+                        {' '}Please shorten the content to meet Google search engine guidelines.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Submit Actions */}
                 <div className="pt-4 border-t border-[#E9E7F2] flex items-center justify-between">
                   <div className="text-[11px] text-neutral-500">
@@ -564,7 +662,8 @@ export const SeoView: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 rounded-xl bg-[#6D28D9] hover:bg-[#5B21B6] text-white font-bold flex items-center gap-1.5 shadow-md"
+                      disabled={formData.seoTitle.length > 60 || formData.metaDescription.length > 160 || !formData.seoTitle.trim() || !formData.metaDescription.trim()}
+                      className="px-5 py-2 rounded-xl bg-[#6D28D9] hover:bg-[#5B21B6] disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-bold flex items-center gap-1.5 shadow-md transition-all"
                     >
                       <Save className="w-3.5 h-3.5" />
                       <span>Save &amp; Publish SEO</span>

@@ -51,11 +51,15 @@ export const sendContactNotificationEmail = async (data: {
   email: string;
   phone?: string | null;
   company?: string | null;
+  websiteUrl?: string | null;
   service?: string | null;
   budget?: string | null;
+  timeline?: string | null;
   message: string;
+  pageUrl?: string | null;
+  source?: string | null;
 }): Promise<void> => {
-  const subject = `[House Robotics New Lead] ${data.service || 'Inquiry'} - ${data.name} (${data.inquiryId})`;
+  const subject = `[House Robotics Lead] ${data.service || 'Inquiry'} - ${data.name} (${data.inquiryId})`;
 
   const html = `
     <!DOCTYPE html>

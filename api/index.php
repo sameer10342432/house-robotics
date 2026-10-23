@@ -327,23 +327,54 @@ try {
         }
 
         $input = Security::getJsonInput();
-        $name    = Security::sanitizeString($input['name'] ?? '', 100);
-        $email   = strtolower(trim($input['email'] ?? ''));
-        $phone   = Security::sanitizeString($input['phone'] ?? '', 50);
-        $company = Security::sanitizeString($input['company'] ?? '', 150);
-        $service = Security::sanitizeString($input['service'] ?? 'General Digital Marketing', 100);
-        $budget  = Security::sanitizeString($input['budget'] ?? 'Not specified', 100);
+
+        // 1. Anti-spam honeypot defense (silent trap)
+        $honeypot = trim($input['hp_field'] ?? '');
+        if (!empty($honeypot)) {
+            error_log('[SPAM TRAP] Honeypot field filled by remote bot: ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+            $fakeInq = sprintf('HR-INQ-%s-%04d', date('Ymd'), mt_rand(1000, 9999));
+            Response::success(['id' => Database::generateUuid(), 'inquiryId' => $fakeInq, 'receivedAt' => date('Y-m-d H:i:s')], 'Inquiry submitted successfully', 201);
+        }
+
+        // 2. Minimum form fill-out duration (anti-bot speed check)
+        $formRenderTime = $input['formRenderTime'] ?? null;
+        if ($formRenderTime && is_numeric($formRenderTime)) {
+            $durationMs = (time() * 1000) - (float)$formRenderTime;
+            if ($durationMs > 0 && $durationMs < 1200) {
+                Response::error('Submission received unusually quickly. Please review your details and submit again.', 422, ['speed' => 'Too fast']);
+            }
+        }
+
+        $name       = Security::sanitizeString($input['name'] ?? '', 100);
+        $email      = strtolower(trim($input['email'] ?? ''));
+        $phone      = Security::sanitizeString($input['phone'] ?? '', 50);
+        $company    = Security::sanitizeString($input['company'] ?? '', 150);
+        $websiteUrl = Security::sanitizeString($input['websiteUrl'] ?? $input['website_url'] ?? '', 255);
+        $city       = Security::sanitizeString($input['city'] ?? '', 100);
+        $state      = Security::sanitizeString($input['state'] ?? '', 100);
+        $service    = Security::sanitizeString($input['service'] ?? 'General Digital Marketing', 100);
+        $budget     = Security::sanitizeString($input['budget'] ?? 'Not specified', 100);
+        $timeline   = Security::sanitizeString($input['timeline'] ?? '', 100);
         $rawMessage = trim($input['message'] ?? '');
-        $message = !empty($rawMessage) 
+        $message    = !empty($rawMessage) 
             ? Security::sanitizeString($rawMessage, 3000) 
             : Security::sanitizeString("Prospective client requested a strategic consultation regarding {$service}.", 1000);
         
-        $page    = Security::sanitizeString($input['page'] ?? $input['page_url'] ?? $_SERVER['HTTP_REFERER'] ?? 'https://houserobotics.online/', 500);
+        $serviceDetailsRaw = $input['serviceDetails'] ?? $input['service_details'] ?? null;
+        $serviceDetails = !empty($serviceDetailsRaw) 
+            ? (is_string($serviceDetailsRaw) ? Security::sanitizeString($serviceDetailsRaw, 4000) : json_encode($serviceDetailsRaw, JSON_UNESCAPED_SLASHES))
+            : null;
+
+        $consentGiven = isset($input['consentGiven']) ? ($input['consentGiven'] ? 1 : 0) : 1;
+        
+        $page    = Security::sanitizeString($input['page'] ?? $input['page_url'] ?? $input['pageUrl'] ?? $_SERVER['HTTP_REFERER'] ?? 'https://houserobotics.online/', 500);
         $referrer = Security::sanitizeString($input['referrer'] ?? $_SERVER['HTTP_REFERER'] ?? '', 500);
-        $source  = Security::sanitizeString($input['source'] ?? ($path === '/consultation' ? 'Consultation Modal' : 'Website Inquiry Form'), 100);
-        $utmSource = Security::sanitizeString($input['utm_source'] ?? $input['utmSource'] ?? '', 100);
-        $utmMedium = Security::sanitizeString($input['utm_medium'] ?? $input['utmMedium'] ?? '', 100);
+        $source  = Security::sanitizeString($input['source'] ?? ($path === '/consultation' ? 'Consultation Modal' : (str_contains($page, '/usa/') ? 'USA Location Landing Page' : 'Website Inquiry Form')), 100);
+        $utmSource   = Security::sanitizeString($input['utm_source'] ?? $input['utmSource'] ?? '', 100);
+        $utmMedium   = Security::sanitizeString($input['utm_medium'] ?? $input['utmMedium'] ?? '', 100);
         $utmCampaign = Security::sanitizeString($input['utm_campaign'] ?? $input['utmCampaign'] ?? '', 100);
+        $utmContent  = Security::sanitizeString($input['utm_content'] ?? $input['utmContent'] ?? '', 100);
+        $utmTerm     = Security::sanitizeString($input['utm_term'] ?? $input['utmTerm'] ?? '', 100);
         $ip = $_SERVER['REMOTE_ADDR'] ?? '';
         $userAgent = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255);
 
@@ -359,45 +390,85 @@ try {
             Response::validationError($errors);
         }
 
+        // 3. Duplicate submission prevention (60-second window)
+        $recentDuplicate = Database::fetchOne(
+            "SELECT id, inquiry_id as inquiryId, created_at as createdAt 
+             FROM leads WHERE email = ? AND service = ? AND created_at >= (NOW() - INTERVAL 60 SECOND) LIMIT 1",
+            [$email, $service]
+        );
+
+        if ($recentDuplicate) {
+            Response::success([
+                'id'          => $recentDuplicate['id'],
+                'inquiryId'   => $recentDuplicate['inquiryId'],
+                'receivedAt'  => $recentDuplicate['createdAt'],
+                'isDuplicate' => true
+            ], 'Your inquiry has already been received. Our strategy team is currently reviewing your brief.', 200);
+        }
+
         // Generate Inquiry ID: HR-INQ-YYYYMMDD-XXXX
         $inquiryId = sprintf('HR-INQ-%s-%04d', date('Ymd'), mt_rand(1000, 9999));
         $now = date('Y-m-d H:i:s');
         $msgId = Database::generateUuid();
         $leadId = Database::generateUuid();
 
-        // 1. Save Contact Message in MySQL
+        // 4. Save Contact Message in MySQL
         Database::execute(
-            "INSERT INTO contact_messages (id, inquiry_id, name, email, phone, company, service, budget, message, page_url, referrer, ip_address, user_agent, status, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNREAD', ?, ?)",
-            [$msgId, $inquiryId, $name, $email, $phone, $company, $service, $budget, $message, $page, $referrer, $ip, $userAgent, $now, $now]
+            "INSERT INTO contact_messages (id, inquiry_id, name, email, phone, company, website_url, city, state, service, budget, timeline, message, service_details, consent_given, page_url, referrer, ip_address, user_agent, status, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNREAD', ?, ?)",
+            [$msgId, $inquiryId, $name, $email, $phone, $company, $websiteUrl, $city, $state, $service, $budget, $timeline, $message, $serviceDetails, $consentGiven, $page, $referrer, $ip, $userAgent, $now, $now]
         );
 
-        // 2. Automatically Create CRM Lead in MySQL (Immediately visible in Admin Panel)
+        // 5. Automatically Create CRM Lead in MySQL (Immediately visible in Admin Panel)
         Database::execute(
-            "INSERT INTO leads (id, inquiry_id, name, email, phone, company, service, budget, message, page_url, referrer, ip_address, user_agent, utm_source, utm_medium, utm_campaign, source, status, score, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'NEW', 60, ?, ?)",
-            [$leadId, $inquiryId, $name, $email, $phone, $company, $service, $budget, $message, $page, $referrer, $ip, $userAgent, $utmSource, $utmMedium, $utmCampaign, $source, $now, $now]
+            "INSERT INTO leads (id, inquiry_id, name, email, phone, company, website_url, city, state, service, budget, timeline, message, service_details, consent_given, page_url, referrer, ip_address, user_agent, utm_source, utm_medium, utm_campaign, utm_content, utm_term, source, status, score, follow_up_status, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'NEW', 60, 'NONE', ?, ?)",
+            [$leadId, $inquiryId, $name, $email, $phone, $company, $websiteUrl, $city, $state, $service, $budget, $timeline, $message, $serviceDetails, $consentGiven, $page, $referrer, $ip, $userAgent, $utmSource, $utmMedium, $utmCampaign, $utmContent, $utmTerm, $source, $now, $now]
         );
 
-        // 3. Dispatch Professional HTML Email Notification to sameerliaqat81@gmail.com
-        // Note: Even if email dispatch fails or times out, the MySQL record is already committed.
+        // If from USA location page, increment lead counter
+        if (str_contains($page, '/usa/')) {
+            try {
+                $cleanPath = '/' . trim(parse_url($page, PHP_URL_PATH) ?? '', '/');
+                Database::execute("UPDATE usa_location_pages SET leads_count = leads_count + 1 WHERE url_path = ?", [$cleanPath]);
+            } catch (Throwable $ignore) {}
+        }
+
+        // 6. Dispatch Professional HTML Email Notification to sameerliaqat81@gmail.com
         $mailSent = false;
+        $commId = Database::generateUuid();
         try {
             $mailSent = Mailer::sendContactNotification([
-                'inquiryId' => $inquiryId,
-                'name'      => $name,
-                'email'     => $email,
-                'phone'     => $phone,
-                'company'   => $company,
-                'service'   => $service,
-                'budget'    => $budget,
-                'message'   => $message,
-                'page'      => $page,
-                'source'    => $source,
-                'date'      => $now
+                'inquiryId'   => $inquiryId,
+                'name'        => $name,
+                'email'       => $email,
+                'phone'       => $phone,
+                'company'     => $company,
+                'websiteUrl'  => $websiteUrl,
+                'service'     => $service,
+                'budget'      => $budget,
+                'timeline'    => $timeline,
+                'message'     => $message,
+                'serviceDetails' => $serviceDetails,
+                'page'        => $page,
+                'source'      => $source,
+                'date'        => $now
             ]);
+
+            Database::execute(
+                "INSERT INTO lead_communications (id, lead_id, type, channel, recipient, subject, status, sent_at, created_at)
+                 VALUES (?, ?, 'ADMIN_NOTIFICATION', 'EMAIL', 'sameerliaqat81@gmail.com', ?, ?, ?, ?)",
+                [$commId, $leadId, "New Website Inquiry — House Robotics — {$service} [{$inquiryId}]", ($mailSent ? 'SENT' : 'LOGGED'), ($mailSent ? $now : null), $now]
+            );
         } catch (Throwable $mailEx) {
             error_log("[Inquiry Email Warning] " . $mailEx->getMessage());
+            try {
+                Database::execute(
+                    "INSERT INTO lead_communications (id, lead_id, type, channel, recipient, subject, status, error_message, created_at)
+                     VALUES (?, ?, 'ADMIN_NOTIFICATION', 'EMAIL', 'sameerliaqat81@gmail.com', ?, 'FAILED', ?, ?)",
+                    [$commId, $leadId, "New Website Inquiry — House Robotics — {$service} [{$inquiryId}]", substr($mailEx->getMessage(), 0, 500), $now]
+                );
+            } catch (Throwable $logEx) {}
         }
 
         Response::success([
@@ -531,6 +602,91 @@ try {
         );
 
         Response::success(null, 'Event recorded');
+    }
+
+    // -------------------------------------------------------------------------
+    // 9.5 Public USA Locations API
+    // -------------------------------------------------------------------------
+    if ($path === '/locations/hub' && $method === 'GET') {
+        $states = Database::fetchAll("SELECT id, name, code, slug, region, capital, major_industries FROM usa_states WHERE status = 'PUBLISHED' ORDER BY name ASC");
+        $priorityCities = Database::fetchAll("SELECT id, name, slug, state_slug, metro_area, population, major_industries, digital_demand_tier, priority_tier FROM usa_cities WHERE status = 'PUBLISHED' AND priority_tier = 1 ORDER BY population DESC LIMIT 36");
+        $pilotPages = Database::fetchAll("SELECT id, page_type, state_slug, city_slug, service_slug, url_path, h1_title, hero_kicker, focus_keyword FROM usa_location_pages WHERE status = 'PUBLISHED'");
+        $totalCities = (int)Database::fetchColumn("SELECT COUNT(*) FROM usa_cities WHERE status = 'PUBLISHED'");
+
+        Response::success([
+            'totalStates' => count($states),
+            'totalCities' => $totalCities,
+            'totalPublishedLandingPages' => count($pilotPages),
+            'states' => $states,
+            'priorityCities' => $priorityCities,
+            'pilotPages' => $pilotPages
+        ]);
+    }
+
+    if ($path === '/locations/states' && $method === 'GET') {
+        $states = Database::fetchAll("SELECT s.*, (SELECT COUNT(*) FROM usa_cities c WHERE c.state_id = s.id AND c.status = 'PUBLISHED') as city_count FROM usa_states s WHERE s.status = 'PUBLISHED' ORDER BY s.name ASC");
+        Response::success($states);
+    }
+
+    if (str_starts_with($path, '/locations/state/') && $method === 'GET') {
+        $stateSlug = $segments[2] ?? '';
+        $state = Database::fetchOne("SELECT * FROM usa_states WHERE slug = ? LIMIT 1", [$stateSlug]);
+        if (!$state) {
+            Response::notFound("State '{$stateSlug}' not found.");
+        }
+        $cities = Database::fetchAll("SELECT * FROM usa_cities WHERE state_slug = ? AND status = 'PUBLISHED' ORDER BY priority_tier ASC, population DESC", [$stateSlug]);
+        $pages = Database::fetchAll("SELECT * FROM usa_location_pages WHERE state_slug = ? AND status = 'PUBLISHED'", [$stateSlug]);
+        Response::success([
+            'state' => $state,
+            'cities' => $cities,
+            'pages' => $pages
+        ]);
+    }
+
+    if (str_starts_with($path, '/locations/city/') && $method === 'GET') {
+        $stateSlug = $segments[2] ?? '';
+        $citySlug = $segments[3] ?? '';
+        $city = Database::fetchOne("SELECT * FROM usa_cities WHERE state_slug = ? AND slug = ? LIMIT 1", [$stateSlug, $citySlug]);
+        if (!$city) {
+            Response::notFound("City '{$citySlug}' in state '{$stateSlug}' not found.");
+        }
+        $state = Database::fetchOne("SELECT * FROM usa_states WHERE slug = ? LIMIT 1", [$stateSlug]);
+        $pages = Database::fetchAll("SELECT * FROM usa_location_pages WHERE state_slug = ? AND city_slug = ? AND status = 'PUBLISHED'", [$stateSlug, $citySlug]);
+        Response::success([
+            'city' => $city,
+            'state' => $state,
+            'pages' => $pages
+        ]);
+    }
+
+    if (str_starts_with($path, '/locations/page/') && $method === 'GET') {
+        $stateSlug = $segments[2] ?? '';
+        $citySlug = $segments[3] ?? '';
+        $serviceSlug = $segments[4] ?? '';
+        $urlPath = "/usa/{$stateSlug}/{$citySlug}/{$serviceSlug}";
+
+        $page = Database::fetchOne("SELECT * FROM usa_location_pages WHERE url_path = ? LIMIT 1", [$urlPath]);
+        $isPreview = ($_GET['preview'] ?? '') === 'true';
+        if (!$page || ($page['status'] !== 'PUBLISHED' && !$isPreview)) {
+            Response::notFound("Location service page not found.");
+        }
+
+        $city = Database::fetchOne("SELECT * FROM usa_cities WHERE state_slug = ? AND slug = ? LIMIT 1", [$stateSlug, $citySlug]);
+        $state = Database::fetchOne("SELECT * FROM usa_states WHERE slug = ? LIMIT 1", [$stateSlug]);
+
+        $page['localIndustryFocus'] = json_decode($page['local_industry_focus'] ?? '[]', true);
+        $page['businessProblemsSolved'] = json_decode($page['business_problems_solved'] ?? '[]', true);
+        $page['serviceDeliverables'] = json_decode($page['service_deliverables'] ?? '[]', true);
+        $page['suitableCustomerTypes'] = json_decode($page['suitable_customer_types'] ?? '[]', true);
+        $page['processSteps'] = json_decode($page['process_steps'] ?? '[]', true);
+        $page['illustrativeScenarios'] = json_decode($page['illustrative_scenarios'] ?? '{}', true);
+        $page['faqs'] = json_decode($page['faqs'] ?? '[]', true);
+
+        Response::success([
+            'page' => $page,
+            'city' => $city,
+            'state' => $state
+        ]);
     }
 
     // -------------------------------------------------------------------------
@@ -689,16 +845,17 @@ try {
     // -------------------------------------------------------------------------
     // 12. Administrator Leads CRM API
     // -------------------------------------------------------------------------
-    if ($path === '/admin/leads' && $method === 'GET') {
+    // CSV Export: GET /api/admin/leads/export (with formula injection protection)
+    if ($path === '/admin/leads/export' && $method === 'GET') {
         Auth::requireAuth();
 
-        $status  = $_GET['status'] ?? null;
-        $service = $_GET['service'] ?? null;
-        $source  = $_GET['source'] ?? null;
-        $search  = $_GET['search'] ?? null;
-        $page    = max(1, (int)($_GET['page'] ?? 1));
-        $limit   = min(100, max(1, (int)($_GET['limit'] ?? 20)));
-        $offset  = ($page - 1) * $limit;
+        $status   = $_GET['status'] ?? null;
+        $service  = $_GET['service'] ?? null;
+        $source   = $_GET['source'] ?? null;
+        $city     = $_GET['city'] ?? null;
+        $state    = $_GET['state'] ?? null;
+        $search   = $_GET['search'] ?? null;
+        $followUp = $_GET['followUp'] ?? null;
 
         $where = [];
         $params = [];
@@ -715,6 +872,155 @@ try {
             $where[] = "source = ?";
             $params[] = $source;
         }
+        if ($city && $city !== 'ALL') {
+            $where[] = "city LIKE ?";
+            $params[] = "%{$city}%";
+        }
+        if ($state && $state !== 'ALL') {
+            $where[] = "state LIKE ?";
+            $params[] = "%{$state}%";
+        }
+        if ($followUp === 'OVERDUE') {
+            $where[] = "follow_up_date < CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'TODAY') {
+            $where[] = "DATE(follow_up_date) = CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'UPCOMING') {
+            $where[] = "follow_up_date > CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'COMPLETED') {
+            $where[] = "follow_up_status = 'COMPLETED'";
+        }
+        if ($search) {
+            $where[] = "(name LIKE ? OR email LIKE ? OR company LIKE ? OR inquiry_id LIKE ?)";
+            $s = "%{$search}%";
+            $params[] = $s;
+            $params[] = $s;
+            $params[] = $s;
+            $params[] = $s;
+        }
+
+        $whereClause = !empty($where) ? ('WHERE ' . implode(' AND ', $where)) : '';
+        $leads = Database::fetchAll(
+            "SELECT * FROM leads {$whereClause} ORDER BY created_at DESC",
+            $params
+        );
+
+        $headers = [
+            'Inquiry Reference', 'Contact Name', 'Business Email', 'Phone', 'Company Name',
+            'Website URL', 'Requested Service', 'City', 'State', 'Project Budget', 'Target Timeline',
+            'Inbound Brief', 'Lead Source', 'CRM Status', 'Follow-Up Date', 'Follow-Up Status',
+            'Follow-Up Note', 'Consent Confirmed', 'Landing Page', 'UTM Source', 'UTM Medium',
+            'UTM Campaign', 'Submission Timestamp'
+        ];
+
+        // Sanitize helper to prevent CSV formula injection (=, +, -, @)
+        $sanitizeCell = function($val) {
+            if ($val === null || $val === '') return '""';
+            $str = str_replace('"', '""', (string)$val);
+            if (preg_match('/^[=+\-@\t\r]/', $str)) {
+                $str = "'" . $str;
+            }
+            return '"' . $str . '"';
+        };
+
+        $out = fopen('php://temp', 'r+');
+        fputs($out, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
+        fputcsv($out, $headers);
+
+        foreach ($leads as $l) {
+            fputs($out, implode(',', [
+                $sanitizeCell($l['inquiry_id'] ?? ''),
+                $sanitizeCell($l['name'] ?? ''),
+                $sanitizeCell($l['email'] ?? ''),
+                $sanitizeCell($l['phone'] ?? ''),
+                $sanitizeCell($l['company'] ?? ''),
+                $sanitizeCell($l['website_url'] ?? ''),
+                $sanitizeCell($l['service'] ?? ''),
+                $sanitizeCell($l['city'] ?? ''),
+                $sanitizeCell($l['state'] ?? ''),
+                $sanitizeCell($l['budget'] ?? ''),
+                $sanitizeCell($l['timeline'] ?? ''),
+                $sanitizeCell($l['message'] ?? ''),
+                $sanitizeCell($l['source'] ?? ''),
+                $sanitizeCell($l['status'] ?? ''),
+                $sanitizeCell($l['follow_up_date'] ?? ''),
+                $sanitizeCell($l['follow_up_status'] ?? 'NONE'),
+                $sanitizeCell($l['follow_up_note'] ?? ''),
+                $sanitizeCell(!empty($l['consent_given']) ? 'YES' : 'NO'),
+                $sanitizeCell($l['page_url'] ?? ''),
+                $sanitizeCell($l['utm_source'] ?? ''),
+                $sanitizeCell($l['utm_medium'] ?? ''),
+                $sanitizeCell($l['utm_campaign'] ?? ''),
+                $sanitizeCell($l['created_at'] ?? '')
+            ]) . "\n");
+        }
+
+        rewind($out);
+        $csvData = stream_get_contents($out);
+        fclose($out);
+
+        $filename = 'house-robotics-leads-' . date('Y-m-d') . '.csv';
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($csvData));
+        echo $csvData;
+        exit;
+    }
+
+    if ($path === '/admin/leads' && $method === 'GET') {
+        Auth::requireAuth();
+
+        $status   = $_GET['status'] ?? null;
+        $service  = $_GET['service'] ?? null;
+        $source   = $_GET['source'] ?? null;
+        $city     = $_GET['city'] ?? null;
+        $state    = $_GET['state'] ?? null;
+        $search   = $_GET['search'] ?? null;
+        $followUp = $_GET['followUp'] ?? null;
+        $dateRange= $_GET['dateRange'] ?? null;
+        $page     = max(1, (int)($_GET['page'] ?? 1));
+        $limit    = min(100, max(1, (int)($_GET['limit'] ?? 20)));
+        $offset   = ($page - 1) * $limit;
+
+        $where = [];
+        $params = [];
+
+        if ($status && $status !== 'ALL') {
+            $where[] = "status = ?";
+            $params[] = $status;
+        }
+        if ($service && $service !== 'ALL') {
+            $where[] = "service LIKE ?";
+            $params[] = "%{$service}%";
+        }
+        if ($source && $source !== 'ALL') {
+            $where[] = "source = ?";
+            $params[] = $source;
+        }
+        if ($city && $city !== 'ALL') {
+            $where[] = "city LIKE ?";
+            $params[] = "%{$city}%";
+        }
+        if ($state && $state !== 'ALL') {
+            $where[] = "state LIKE ?";
+            $params[] = "%{$state}%";
+        }
+        if ($followUp === 'OVERDUE') {
+            $where[] = "follow_up_date < CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'TODAY') {
+            $where[] = "DATE(follow_up_date) = CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'UPCOMING') {
+            $where[] = "follow_up_date > CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'COMPLETED') {
+            $where[] = "follow_up_status = 'COMPLETED'";
+        }
+        if ($dateRange && $dateRange !== 'all') {
+            $days = 30;
+            if ($dateRange === 'today') $days = 1;
+            elseif ($dateRange === '7d') $days = 7;
+            elseif ($dateRange === '30d') $days = 30;
+            elseif ($dateRange === '90d') $days = 90;
+            $where[] = "created_at >= (NOW() - INTERVAL {$days} DAY)";
+        }
         if ($search) {
             $where[] = "(name LIKE ? OR email LIKE ? OR company LIKE ? OR inquiry_id LIKE ?)";
             $s = "%{$search}%";
@@ -728,13 +1034,24 @@ try {
 
         $total = (int)Database::fetchColumn("SELECT COUNT(*) FROM leads {$whereClause}", $params);
         $leads = Database::fetchAll(
-            "SELECT id, inquiry_id as inquiryId, name, email, phone, company, service, budget, message, source, status, score, assigned_to as assignedTo, created_at as createdAt, updated_at as updatedAt 
+            "SELECT id, inquiry_id as inquiryId, name, email, phone, company, website_url as websiteUrl, city, state, service, budget, timeline, message, service_details as serviceDetails, consent_given as consentGiven, page_url as pageUrl, referrer, utm_source as utmSource, utm_medium as utmMedium, utm_campaign as utmCampaign, source, status, score, follow_up_date as followUpDate, follow_up_status as followUpStatus, follow_up_note as followUpNote, assigned_to as assignedTo, created_at as createdAt, updated_at as updatedAt 
              FROM leads {$whereClause} ORDER BY created_at DESC LIMIT {$limit} OFFSET {$offset}",
             $params
         );
 
-        // Attach last notes
+        // Attach last notes & dynamic follow-up status
+        $todayStr = date('Y-m-d');
         foreach ($leads as &$ld) {
+            if (!empty($ld['followUpDate']) && ($ld['followUpStatus'] ?? '') !== 'COMPLETED') {
+                $fDateStr = substr($ld['followUpDate'], 0, 10);
+                if ($fDateStr < $todayStr) {
+                    $ld['followUpStatus'] = 'OVERDUE';
+                } elseif ($fDateStr === $todayStr) {
+                    $ld['followUpStatus'] = 'TODAY';
+                } else {
+                    $ld['followUpStatus'] = 'UPCOMING';
+                }
+            }
             $ld['notes'] = Database::fetchAll(
                 "SELECT id, lead_id as leadId, author_name as authorName, note, created_at as createdAt 
                  FROM lead_notes WHERE lead_id = ? ORDER BY created_at DESC LIMIT 3",
@@ -757,18 +1074,38 @@ try {
         Auth::requireAuth();
         $leadId = $segments[2];
         $lead = Database::fetchOne(
-            "SELECT id, inquiry_id as inquiryId, name, email, phone, company, service, budget, message, source, status, score, assigned_to as assignedTo, created_at as createdAt, updated_at as updatedAt 
+            "SELECT id, inquiry_id as inquiryId, name, email, phone, company, website_url as websiteUrl, city, state, service, budget, timeline, message, service_details as serviceDetails, consent_given as consentGiven, page_url as pageUrl, referrer, utm_source as utmSource, utm_medium as utmMedium, utm_campaign as utmCampaign, source, status, score, follow_up_date as followUpDate, follow_up_status as followUpStatus, follow_up_note as followUpNote, assigned_to as assignedTo, created_at as createdAt, updated_at as updatedAt 
              FROM leads WHERE id = ? LIMIT 1",
             [$leadId]
         );
         if (!$lead) {
             Response::notFound('Lead not found.');
         }
+
+        $todayStr = date('Y-m-d');
+        if (!empty($lead['followUpDate']) && ($lead['followUpStatus'] ?? '') !== 'COMPLETED') {
+            $fDateStr = substr($lead['followUpDate'], 0, 10);
+            if ($fDateStr < $todayStr) {
+                $lead['followUpStatus'] = 'OVERDUE';
+            } elseif ($fDateStr === $todayStr) {
+                $lead['followUpStatus'] = 'TODAY';
+            } else {
+                $lead['followUpStatus'] = 'UPCOMING';
+            }
+        }
+
         $lead['notes'] = Database::fetchAll(
             "SELECT id, lead_id as leadId, author_name as authorName, note, created_at as createdAt 
              FROM lead_notes WHERE lead_id = ? ORDER BY created_at DESC",
             [$leadId]
         );
+
+        $lead['communications'] = Database::fetchAll(
+            "SELECT id, lead_id as leadId, type, channel, recipient, subject, status, error_message as errorMessage, sent_at as sentAt, created_at as createdAt 
+             FROM lead_communications WHERE lead_id = ? ORDER BY created_at DESC",
+            [$leadId]
+        );
+
         Response::success($lead);
     }
 
@@ -806,6 +1143,72 @@ try {
         Response::success(['id' => $leadId, 'status' => $newStatus], 'Lead status updated.');
     }
 
+    // Schedule Follow-Up: POST /api/admin/leads/:id/followup
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'leads' && isset($segments[2], $segments[3]) && $segments[3] === 'followup' && !isset($segments[4]) && $method === 'POST') {
+        $admin = Auth::requireAuth();
+        $leadId = $segments[2];
+        $input = Security::getJsonInput();
+        $followUpDate = Security::sanitizeString($input['followUpDate'] ?? '', 50);
+        $followUpNote = Security::sanitizeString($input['followUpNote'] ?? '', 1000);
+
+        if (empty($followUpDate)) {
+            Response::error('Follow-up date is required.', 422);
+        }
+
+        Database::execute(
+            "UPDATE leads SET follow_up_date = ?, follow_up_status = 'PENDING', follow_up_note = ?, updated_at = ? WHERE id = ?",
+            [$followUpDate, $followUpNote, date('Y-m-d H:i:s'), $leadId]
+        );
+
+        // Add to timeline notes
+        $noteId = Database::generateUuid();
+        $now = date('Y-m-d H:i:s');
+        $noteText = "Scheduled follow-up for " . substr($followUpDate, 0, 10) . (!empty($followUpNote) ? ": {$followUpNote}" : '');
+        Database::execute(
+            "INSERT INTO lead_notes (id, lead_id, admin_id, author_name, note, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            [$noteId, $leadId, $admin['id'], $admin['name'], $noteText, $now]
+        );
+
+        Audit::log([
+            'adminId'   => $admin['id'],
+            'adminName' => $admin['name'],
+            'action'    => 'SCHEDULE_LEAD_FOLLOWUP',
+            'entity'    => 'Lead',
+            'entityId'  => $leadId,
+            'metadata'  => ['followUpDate' => $followUpDate, 'note' => $followUpNote]
+        ]);
+
+        Response::success(['id' => $leadId, 'followUpDate' => $followUpDate, 'followUpStatus' => 'PENDING'], 'Follow-up scheduled.');
+    }
+
+    // Mark Follow-Up Complete: PATCH /api/admin/leads/:id/followup/complete
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'leads' && isset($segments[2], $segments[3], $segments[4]) && $segments[3] === 'followup' && $segments[4] === 'complete' && ($method === 'PATCH' || $method === 'POST')) {
+        $admin = Auth::requireAuth();
+        $leadId = $segments[2];
+        $now = date('Y-m-d H:i:s');
+
+        Database::execute(
+            "UPDATE leads SET follow_up_status = 'COMPLETED', updated_at = ? WHERE id = ?",
+            [$now, $leadId]
+        );
+
+        $noteId = Database::generateUuid();
+        Database::execute(
+            "INSERT INTO lead_notes (id, lead_id, admin_id, author_name, note, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            [$noteId, $leadId, $admin['id'], $admin['name'], 'Marked scheduled follow-up as completed.', $now]
+        );
+
+        Audit::log([
+            'adminId'   => $admin['id'],
+            'adminName' => $admin['name'],
+            'action'    => 'COMPLETE_LEAD_FOLLOWUP',
+            'entity'    => 'Lead',
+            'entityId'  => $leadId
+        ]);
+
+        Response::success(['id' => $leadId, 'followUpStatus' => 'COMPLETED'], 'Follow-up completed.');
+    }
+
     // Add note to lead: POST /api/admin/leads/:id/notes
     if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'leads' && isset($segments[2], $segments[3]) && $segments[3] === 'notes' && $method === 'POST') {
         $admin = Auth::requireAuth();
@@ -832,6 +1235,826 @@ try {
             'note'       => $noteText,
             'createdAt'  => $now
         ], 'Note added.', 201);
+    }
+
+    // -------------------------------------------------------------------------
+    // 12b. Phase 5: USA Prospect Management & Outreach Automation API
+    // -------------------------------------------------------------------------
+
+    // Helper: Normalize domain in PHP
+    $normalizeDomainPhp = function($url) {
+        if (empty($url)) return '';
+        $clean = strtolower(trim($url));
+        $clean = preg_replace('#^https?://#i', '', $clean);
+        $clean = preg_replace('#^www\.#i', '', $clean);
+        $clean = explode('/', $clean)[0];
+        $clean = explode('?', $clean)[0];
+        $clean = explode(':', $clean)[0];
+        return $clean;
+    };
+
+    // Helper: CSV cell formula injection escape
+    $sanitizeCsvCellPhp = function($value) {
+        if ($value === null || $value === '') return '""';
+        $str = str_replace('"', '""', (string)$value);
+        if (preg_match('/^[=+\-@\t\r]/', $str)) {
+            $str = "'" . $str;
+        }
+        return '"' . $str . '"';
+    };
+
+    // CSV Export: GET /api/admin/prospects/export
+    if ($path === '/admin/prospects/export' && $method === 'GET') {
+        Auth::requireAuth();
+
+        $status     = $_GET['status'] ?? null;
+        $service    = $_GET['service'] ?? null;
+        $priority   = $_GET['priority'] ?? null;
+        $confidence = $_GET['confidence'] ?? null;
+        $city       = $_GET['city'] ?? null;
+        $state      = $_GET['state'] ?? null;
+        $followUp   = $_GET['followUp'] ?? null;
+        $search     = $_GET['search'] ?? null;
+
+        $where = ["1=1"];
+        $params = [];
+
+        if ($status && $status !== 'ALL') {
+            $where[] = "status = ?";
+            $params[] = $status;
+        }
+        if ($service && $service !== 'ALL') {
+            $where[] = "potential_service_fit = ?";
+            $params[] = $service;
+        }
+        if ($priority && $priority !== 'ALL') {
+            $where[] = "priority = ?";
+            $params[] = $priority;
+        }
+        if ($confidence && $confidence !== 'ALL') {
+            $where[] = "confidence = ?";
+            $params[] = $confidence;
+        }
+        if ($city && $city !== 'ALL') {
+            $where[] = "city LIKE ?";
+            $params[] = "%{$city}%";
+        }
+        if ($state && $state !== 'ALL') {
+            $where[] = "state LIKE ?";
+            $params[] = "%{$state}%";
+        }
+
+        $todayStr = date('Y-m-d');
+        if ($followUp === 'OVERDUE') {
+            $where[] = "follow_up_date < CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'TODAY') {
+            $where[] = "DATE(follow_up_date) = CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'UPCOMING') {
+            $where[] = "follow_up_date > CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'COMPLETED') {
+            $where[] = "follow_up_status = 'COMPLETED'";
+        }
+
+        if ($search) {
+            $where[] = "(business_name LIKE ? OR website_url LIKE ? OR normalized_domain LIKE ? OR category LIKE ? OR email LIKE ? OR city LIKE ? OR state LIKE ?)";
+            $term = "%{$search}%";
+            $params = array_merge($params, array_fill(0, 7, $term));
+        }
+
+        $whereClause = implode(' AND ', $where);
+        $prospects = Database::fetchAll(
+            "SELECT * FROM prospects WHERE {$whereClause} ORDER BY created_at DESC",
+            $params
+        );
+
+        $headers = [
+            'Business Name', 'Website URL', 'Domain', 'Category', 'City', 'State', 'Country',
+            'Public Email', 'Phone', 'Contact Page URL', 'Service Fit', 'Benefit Rationale',
+            'Priority', 'Confidence', 'Status', 'Follow-Up Date', 'Follow-Up Status',
+            'Source Type', 'Research Date', 'Created At'
+        ];
+
+        $rows = [];
+        foreach ($prospects as $p) {
+            $rows[] = implode(',', [
+                $sanitizeCsvCellPhp($p['business_name']),
+                $sanitizeCsvCellPhp($p['website_url']),
+                $sanitizeCsvCellPhp($p['normalized_domain']),
+                $sanitizeCsvCellPhp($p['category'] ?? ''),
+                $sanitizeCsvCellPhp($p['city'] ?? ''),
+                $sanitizeCsvCellPhp($p['state'] ?? ''),
+                $sanitizeCsvCellPhp($p['country'] ?? 'USA'),
+                $sanitizeCsvCellPhp($p['email'] ?? ''),
+                $sanitizeCsvCellPhp($p['phone'] ?? ''),
+                $sanitizeCsvCellPhp($p['contact_page_url'] ?? ''),
+                $sanitizeCsvCellPhp($p['potential_service_fit']),
+                $sanitizeCsvCellPhp($p['benefit_reason'] ?? ''),
+                $sanitizeCsvCellPhp($p['priority']),
+                $sanitizeCsvCellPhp($p['confidence']),
+                $sanitizeCsvCellPhp($p['status']),
+                $sanitizeCsvCellPhp(!empty($p['follow_up_date']) ? substr($p['follow_up_date'], 0, 10) : ''),
+                $sanitizeCsvCellPhp($p['follow_up_status']),
+                $sanitizeCsvCellPhp($p['source_type']),
+                $sanitizeCsvCellPhp(!empty($p['research_date']) ? substr($p['research_date'], 0, 10) : ''),
+                $sanitizeCsvCellPhp($p['created_at'])
+            ]);
+        }
+
+        $filename = 'house-robotics-prospects-' . date('Y-m-d') . '.csv';
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        echo "\xEF\xBB\xBF"; // UTF-8 BOM
+        echo implode(',', array_map(function($h) { return '"' . str_replace('"', '""', $h) . '"'; }, $headers)) . "\n";
+        echo implode("\n", $rows);
+        exit;
+    }
+
+    // Reports: GET /api/admin/prospects/reports/summary
+    if ($path === '/admin/prospects/reports/summary' && $method === 'GET') {
+        Auth::requireAuth();
+
+        $total = (int)Database::fetchColumn("SELECT COUNT(*) FROM prospects");
+
+        $statusRows = Database::fetchAll("SELECT status, COUNT(*) as count FROM prospects GROUP BY status");
+        $statusMap = [];
+        foreach ($statusRows as $r) { $statusMap[$r['status']] = (int)$r['count']; }
+
+        $priorityRows = Database::fetchAll("SELECT priority, COUNT(*) as count FROM prospects GROUP BY priority");
+        $priorityMap = [];
+        foreach ($priorityRows as $r) { $priorityMap[$r['priority']] = (int)$r['count']; }
+
+        $serviceRows = Database::fetchAll("SELECT potential_service_fit as service, COUNT(*) as count FROM prospects GROUP BY potential_service_fit");
+        $serviceMap = [];
+        foreach ($serviceRows as $r) { $serviceMap[$r['service']] = (int)$r['count']; }
+
+        $activityRows = Database::fetchAll("SELECT activity_type as type, COUNT(*) as count FROM prospect_activities GROUP BY activity_type");
+        $activityMap = [];
+        foreach ($activityRows as $r) { $activityMap[$r['type']] = (int)$r['count']; }
+
+        $topStates = Database::fetchAll(
+            "SELECT state, COUNT(*) as count FROM prospects WHERE state IS NOT NULL AND state != '' GROUP BY state ORDER BY count DESC LIMIT 8"
+        );
+
+        $recentActivities = Database::fetchAll(
+            "SELECT a.*, p.business_name as businessName, p.website_url as websiteUrl 
+             FROM prospect_activities a 
+             LEFT JOIN prospects p ON a.prospect_id = p.id 
+             ORDER BY a.performed_at DESC LIMIT 10"
+        );
+
+        Response::success([
+            'total'            => $total,
+            'statusMap'        => $statusMap,
+            'priorityMap'      => $priorityMap,
+            'serviceMap'       => $serviceMap,
+            'activityMap'      => $activityMap,
+            'topStates'        => $topStates,
+            'recentActivities' => $recentActivities
+        ]);
+    }
+
+    // Campaigns List: GET /api/admin/prospects/campaigns/list
+    if ($path === '/admin/prospects/campaigns/list' && $method === 'GET') {
+        Auth::requireAuth();
+        $campaigns = Database::fetchAll(
+            "SELECT c.*, COUNT(m.id) as membersCount 
+             FROM prospect_campaigns c 
+             LEFT JOIN prospect_campaign_members m ON c.id = m.campaign_id 
+             GROUP BY c.id 
+             ORDER BY c.created_at DESC"
+        );
+        foreach ($campaigns as &$c) {
+            $c['_count'] = ['members' => (int)($c['membersCount'] ?? 0)];
+        }
+        Response::success($campaigns);
+    }
+
+    // Campaign Create: POST /api/admin/prospects/campaigns/create
+    if ($path === '/admin/prospects/campaigns/create' && $method === 'POST') {
+        Auth::requireAuth();
+        $body = Request::json();
+        $name = trim($body['name'] ?? '');
+        if (empty($name)) {
+            Response::error('Campaign name is required.', 422);
+        }
+
+        $cId = Database::generateUuid();
+        Database::execute(
+            "INSERT INTO prospect_campaigns (id, name, goal, service, city, state, category, target_audience, message_template, status, notes, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
+            [
+                $cId, $name, $body['goal'] ?? null, $body['service'] ?? null,
+                $body['city'] ?? null, $body['state'] ?? null, $body['category'] ?? null,
+                $body['targetAudience'] ?? null, $body['messageTemplate'] ?? null,
+                $body['status'] ?? 'DRAFT', $body['notes'] ?? null
+            ]
+        );
+
+        $created = Database::fetchOne("SELECT * FROM prospect_campaigns WHERE id = ?", [$cId]);
+        Response::success($created, 'Campaign created.', 201);
+    }
+
+    // Assign Members to Campaign: POST /api/admin/prospects/campaigns/{id}/members
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'prospects' && ($segments[2] ?? '') === 'campaigns' && isset($segments[3]) && ($segments[4] ?? '') === 'members' && $method === 'POST') {
+        Auth::requireAuth();
+        $campaignId = $segments[3];
+        $body = Request::json();
+        $prospectIds = $body['prospectIds'] ?? [];
+        if (!is_array($prospectIds) || empty($prospectIds)) {
+            Response::error('prospectIds must be a non-empty array.', 422);
+        }
+
+        $added = 0;
+        foreach ($prospectIds as $pId) {
+            $mId = Database::generateUuid();
+            try {
+                Database::execute(
+                    "INSERT IGNORE INTO prospect_campaign_members (id, campaign_id, prospect_id, status, assigned_at) 
+                     VALUES (?, ?, ?, 'PLANNED', NOW())",
+                    [$mId, $campaignId, $pId]
+                );
+                $added++;
+            } catch (Throwable $e) {}
+        }
+        Response::success(['added' => $added], "{$added} prospects assigned to campaign.");
+    }
+
+    // Suppression List: GET /api/admin/prospects/suppressions/list
+    if ($path === '/admin/prospects/suppressions/list' && $method === 'GET') {
+        Auth::requireAuth();
+        $list = Database::fetchAll("SELECT * FROM suppressed_contacts ORDER BY created_at DESC");
+        Response::success($list);
+    }
+
+    // Add Suppression: POST /api/admin/prospects/suppressions/add
+    if ($path === '/admin/prospects/suppressions/add' && $method === 'POST') {
+        $admin = Auth::requireAuth();
+        $body = Request::json();
+        $email = !empty($body['email']) ? strtolower(trim($body['email'])) : null;
+        $domain = !empty($body['domain']) ? $normalizeDomainPhp($body['domain']) : null;
+        $reason = trim($body['reason'] ?? 'DO_NOT_CONTACT_REQUEST');
+
+        if (!$email && !$domain) {
+            Response::error('Email or domain is required.', 422);
+        }
+
+        $sId = Database::generateUuid();
+        Database::execute(
+            "INSERT INTO suppressed_contacts (id, email, domain, reason, source, created_at) 
+             VALUES (?, ?, ?, ?, ?, NOW())",
+            [$sId, $email, $domain, $reason, "Admin: " . ($admin['name'] ?? 'Admin')]
+        );
+
+        Response::success(['id' => $sId, 'email' => $email, 'domain' => $domain, 'reason' => $reason], 'Contact/domain suppressed.', 201);
+    }
+
+    // List Prospects: GET /api/admin/prospects
+    if ($path === '/admin/prospects' && $method === 'GET') {
+        Auth::requireAuth();
+
+        $status     = $_GET['status'] ?? null;
+        $service    = $_GET['service'] ?? null;
+        $priority   = $_GET['priority'] ?? null;
+        $confidence = $_GET['confidence'] ?? null;
+        $city       = $_GET['city'] ?? null;
+        $state      = $_GET['state'] ?? null;
+        $followUp   = $_GET['followUp'] ?? null;
+        $search     = $_GET['search'] ?? null;
+        $page       = max(1, (int)($_GET['page'] ?? 1));
+        $limit      = min(100, max(1, (int)($_GET['limit'] ?? 20)));
+        $offset     = ($page - 1) * $limit;
+
+        $where = ["1=1"];
+        $params = [];
+
+        if ($status && $status !== 'ALL') {
+            $where[] = "status = ?";
+            $params[] = $status;
+        }
+        if ($service && $service !== 'ALL') {
+            $where[] = "potential_service_fit = ?";
+            $params[] = $service;
+        }
+        if ($priority && $priority !== 'ALL') {
+            $where[] = "priority = ?";
+            $params[] = $priority;
+        }
+        if ($confidence && $confidence !== 'ALL') {
+            $where[] = "confidence = ?";
+            $params[] = $confidence;
+        }
+        if ($city && $city !== 'ALL') {
+            $where[] = "city LIKE ?";
+            $params[] = "%{$city}%";
+        }
+        if ($state && $state !== 'ALL') {
+            $where[] = "state LIKE ?";
+            $params[] = "%{$state}%";
+        }
+
+        $todayStr = date('Y-m-d');
+        if ($followUp === 'OVERDUE') {
+            $where[] = "follow_up_date < CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'TODAY') {
+            $where[] = "DATE(follow_up_date) = CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'UPCOMING') {
+            $where[] = "follow_up_date > CURDATE() AND follow_up_status != 'COMPLETED'";
+        } elseif ($followUp === 'COMPLETED') {
+            $where[] = "follow_up_status = 'COMPLETED'";
+        }
+
+        if ($search) {
+            $where[] = "(business_name LIKE ? OR website_url LIKE ? OR normalized_domain LIKE ? OR category LIKE ? OR email LIKE ? OR city LIKE ? OR state LIKE ?)";
+            $term = "%{$search}%";
+            $params = array_merge($params, array_fill(0, 7, $term));
+        }
+
+        $whereClause = implode(' AND ', $where);
+        $total = (int)Database::fetchColumn("SELECT COUNT(*) FROM prospects WHERE {$whereClause}", $params);
+
+        $dataSql = "SELECT id, business_name as businessName, website_url as websiteUrl, normalized_domain as normalizedDomain, 
+                           category, city, state, country, contact_page_url as contactPageUrl, email, phone, source_url as sourceUrl, 
+                           source_type as sourceType, research_date as researchDate, potential_service_fit as potentialServiceFit, 
+                           benefit_reason as benefitReason, priority, confidence, status, follow_up_date as followUpDate, 
+                           follow_up_status as followUpStatus, follow_up_note as followUpNote, internal_notes as internalNotes, 
+                           converted_lead_id as convertedLeadId, converted_at as convertedAt, created_at as createdAt, updated_at as updatedAt 
+                    FROM prospects 
+                    WHERE {$whereClause} 
+                    ORDER BY created_at DESC 
+                    LIMIT {$limit} OFFSET {$offset}";
+
+        $prospects = Database::fetchAll($dataSql, $params);
+
+        foreach ($prospects as &$p) {
+            if (!empty($p['followUpDate']) && ($p['followUpStatus'] ?? '') !== 'COMPLETED') {
+                $fStr = substr($p['followUpDate'], 0, 10);
+                if ($fStr < $todayStr) {
+                    $p['followUpStatus'] = 'OVERDUE';
+                } elseif ($fStr === $todayStr) {
+                    $p['followUpStatus'] = 'TODAY';
+                } else {
+                    $p['followUpStatus'] = 'UPCOMING';
+                }
+            }
+            $p['_count'] = [
+                'notes'      => (int)Database::fetchColumn("SELECT COUNT(*) FROM prospect_notes WHERE prospect_id = ?", [$p['id']]),
+                'activities' => (int)Database::fetchColumn("SELECT COUNT(*) FROM prospect_activities WHERE prospect_id = ?", [$p['id']])
+            ];
+        }
+
+        Response::success($prospects, 'Prospects fetched', 200, [
+            'pagination' => [
+                'total'      => $total,
+                'page'       => $page,
+                'limit'      => $limit,
+                'totalPages' => ceil($total / $limit)
+            ]
+        ]);
+    }
+
+    // Create Prospect: POST /api/admin/prospects
+    if ($path === '/admin/prospects' && $method === 'POST') {
+        $admin = Auth::requireAuth();
+        $body = Request::json();
+
+        $bName = trim($body['businessName'] ?? '');
+        $wUrl  = trim($body['websiteUrl'] ?? '');
+        if (empty($bName) || empty($wUrl)) {
+            Response::error('businessName and websiteUrl are required.', 422);
+        }
+
+        $normDomain = $normalizeDomainPhp($wUrl);
+        $email = !empty($body['email']) ? strtolower(trim($body['email'])) : null;
+
+        // Check suppression
+        $suppWhere = ["domain = ?"];
+        $suppParams = [$normDomain];
+        if ($email) {
+            $suppWhere[] = "email = ?";
+            $suppParams[] = $email;
+        }
+        $suppCheck = Database::fetchOne("SELECT * FROM suppressed_contacts WHERE " . implode(' OR ', $suppWhere) . " LIMIT 1", $suppParams);
+        if ($suppCheck) {
+            Response::error("This contact or domain ({$normDomain}) is suppressed: {$suppCheck['reason']}. Outreach prohibited.", 409);
+        }
+
+        // Check duplicate
+        $dupCheck = Database::fetchOne("SELECT * FROM prospects WHERE normalized_domain = ? LIMIT 1", [$normDomain]);
+        if ($dupCheck) {
+            Response::error("A prospect record already exists for {$dupCheck['business_name']} ({$dupCheck['normalized_domain']}).", 409);
+        }
+
+        $pId = Database::generateUuid();
+        $fDate = !empty($body['followUpDate']) ? $body['followUpDate'] : null;
+
+        Database::execute(
+            "INSERT INTO prospects (id, business_name, website_url, normalized_domain, category, city, state, country, 
+                                   contact_page_url, email, phone, source_url, source_type, research_date, 
+                                   potential_service_fit, benefit_reason, priority, confidence, status, 
+                                   follow_up_date, follow_up_status, follow_up_note, internal_notes, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
+            [
+                $pId, $bName, $wUrl, $normDomain, $body['category'] ?? null, $body['city'] ?? null, $body['state'] ?? null, $body['country'] ?? 'USA',
+                $body['contactPageUrl'] ?? null, $email, $body['phone'] ?? null, $body['sourceUrl'] ?? null, $body['sourceType'] ?? 'MANUAL_RESEARCH',
+                $body['potentialServiceFit'] ?? 'Web Development', $body['benefitReason'] ?? null,
+                $body['priority'] ?? 'MEDIUM', $body['confidence'] ?? 'INFERRED', $body['status'] ?? 'NEW',
+                $fDate, $fDate ? 'PENDING' : 'NONE', $body['followUpNote'] ?? null, $body['internalNotes'] ?? null
+            ]
+        );
+
+        $created = Database::fetchOne("SELECT * FROM prospects WHERE id = ?", [$pId]);
+        Response::success($created, 'Prospect added.', 201);
+    }
+
+    // CSV Bulk Import: POST /api/admin/prospects/import
+    if ($path === '/admin/prospects/import' && $method === 'POST') {
+        Auth::requireAuth();
+        $body = Request::json();
+        $items = $body['prospects'] ?? [];
+        $handling = $body['duplicateHandling'] ?? 'SKIP';
+
+        $inserted = 0; $skipped = 0; $flagged = 0;
+        $dupList = [];
+
+        foreach ($items as $item) {
+            $wUrl = trim($item['websiteUrl'] ?? '');
+            $bName = trim($item['businessName'] ?? '');
+            if (empty($wUrl) || empty($bName)) {
+                $skipped++;
+                continue;
+            }
+
+            $norm = $normalizeDomainPhp($wUrl);
+            $email = !empty($item['email']) ? strtolower(trim($item['email'])) : null;
+
+            // Suppression check
+            $supp = Database::fetchOne("SELECT id FROM suppressed_contacts WHERE domain = ? OR (email IS NOT NULL AND email = ?) LIMIT 1", [$norm, $email]);
+            if ($supp) {
+                $skipped++;
+                continue;
+            }
+
+            $existing = Database::fetchOne("SELECT * FROM prospects WHERE normalized_domain = ? LIMIT 1", [$norm]);
+            if ($existing) {
+                if ($handling === 'SKIP') {
+                    $skipped++;
+                    $dupList[] = ['businessName' => $bName, 'domain' => $norm];
+                } elseif ($handling === 'FLAG') {
+                    $flagged++;
+                    Database::execute(
+                        "UPDATE prospects SET confidence = 'NEEDS_REVIEW', updated_at = NOW() WHERE id = ?",
+                        [$existing['id']]
+                    );
+                } elseif ($handling === 'OVERWRITE') {
+                    $inserted++;
+                    Database::execute(
+                        "UPDATE prospects SET business_name = ?, category = ?, city = ?, state = ?, email = ?, phone = ?, updated_at = NOW() WHERE id = ?",
+                        [$bName, $item['category'] ?? $existing['category'], $item['city'] ?? $existing['city'], $item['state'] ?? $existing['state'], $email ?? $existing['email'], $item['phone'] ?? $existing['phone'], $existing['id']]
+                    );
+                }
+                continue;
+            }
+
+            $pId = Database::generateUuid();
+            Database::execute(
+                "INSERT INTO prospects (id, business_name, website_url, normalized_domain, category, city, state, country, 
+                                       contact_page_url, email, phone, source_type, research_date, potential_service_fit, 
+                                       benefit_reason, priority, confidence, status, created_at, updated_at) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 'USA', ?, ?, ?, 'CSV_IMPORT', NOW(), ?, ?, ?, ?, 'NEW', NOW(), NOW())",
+                [
+                    $pId, $bName, $wUrl, $norm, $item['category'] ?? null, $item['city'] ?? null, $item['state'] ?? null,
+                    $item['contactPageUrl'] ?? null, $email, $item['phone'] ?? null,
+                    $item['potentialServiceFit'] ?? 'Web Development', $item['benefitReason'] ?? null,
+                    $item['priority'] ?? 'MEDIUM', $item['confidence'] ?? 'INFERRED'
+                ]
+            );
+            $inserted++;
+        }
+
+        Response::success([
+            'insertedCount' => $inserted,
+            'skippedCount'  => $skipped,
+            'flaggedCount'  => $flagged,
+            'duplicates'    => $dupList
+        ], "Import processed: {$inserted} inserted, {$skipped} skipped.");
+    }
+
+    // Detail Prospect: GET /api/admin/prospects/{id}
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'prospects' && isset($segments[2]) && !isset($segments[3]) && $method === 'GET') {
+        Auth::requireAuth();
+        $pId = $segments[2];
+        $prospect = Database::fetchOne(
+            "SELECT id, business_name as businessName, website_url as websiteUrl, normalized_domain as normalizedDomain, 
+                    category, city, state, country, contact_page_url as contactPageUrl, email, phone, source_url as sourceUrl, 
+                    source_type as sourceType, research_date as researchDate, potential_service_fit as potentialServiceFit, 
+                    benefit_reason as benefitReason, priority, confidence, status, follow_up_date as followUpDate, 
+                    follow_up_status as followUpStatus, follow_up_note as followUpNote, internal_notes as internalNotes, 
+                    converted_lead_id as convertedLeadId, converted_at as convertedAt, created_at as createdAt, updated_at as updatedAt 
+             FROM prospects WHERE id = ? LIMIT 1",
+            [$pId]
+        );
+        if (!$prospect) {
+            Response::notFound('Prospect not found.');
+        }
+
+        $todayStr = date('Y-m-d');
+        if (!empty($prospect['followUpDate']) && ($prospect['followUpStatus'] ?? '') !== 'COMPLETED') {
+            $fStr = substr($prospect['followUpDate'], 0, 10);
+            if ($fStr < $todayStr) {
+                $prospect['followUpStatus'] = 'OVERDUE';
+            } elseif ($fStr === $todayStr) {
+                $prospect['followUpStatus'] = 'TODAY';
+            } else {
+                $prospect['followUpStatus'] = 'UPCOMING';
+            }
+        }
+
+        $prospect['notes'] = Database::fetchAll("SELECT * FROM prospect_notes WHERE prospect_id = ? ORDER BY created_at DESC", [$pId]);
+        $prospect['activities'] = Database::fetchAll("SELECT * FROM prospect_activities WHERE prospect_id = ? ORDER BY performed_at DESC", [$pId]);
+        $prospect['campaignMembers'] = Database::fetchAll(
+            "SELECT m.*, c.name as campaignName, c.status as campaignStatus 
+             FROM prospect_campaign_members m 
+             LEFT JOIN prospect_campaigns c ON m.campaign_id = c.id 
+             WHERE m.prospect_id = ?",
+            [$pId]
+        );
+
+        Response::success($prospect);
+    }
+
+    // Update Prospect: PATCH /api/admin/prospects/{id}
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'prospects' && isset($segments[2]) && !isset($segments[3]) && $method === 'PATCH') {
+        $admin = Auth::requireAuth();
+        $pId = $segments[2];
+        $body = Request::json();
+
+        $existing = Database::fetchOne("SELECT * FROM prospects WHERE id = ? LIMIT 1", [$pId]);
+        if (!$existing) {
+            Response::notFound('Prospect not found.');
+        }
+
+        // If status changed to DO_NOT_CONTACT, add to suppression
+        $newStatus = $body['status'] ?? $existing['status'];
+        if ($newStatus === 'DO_NOT_CONTACT' && $existing['status'] !== 'DO_NOT_CONTACT') {
+            $sId = Database::generateUuid();
+            Database::execute(
+                "INSERT INTO suppressed_contacts (id, email, domain, reason, source, created_at) 
+                 VALUES (?, ?, ?, 'DO_NOT_CONTACT_STATUS_SET_BY_ADMIN', ?, NOW())",
+                [$sId, $existing['email'], $existing['normalized_domain'], "Admin: " . ($admin['name'] ?? 'Admin')]
+            );
+        }
+
+        $bName = $body['businessName'] ?? $existing['business_name'];
+        $wUrl  = $body['websiteUrl'] ?? $existing['website_url'];
+        $norm  = $normalizeDomainPhp($wUrl);
+
+        Database::execute(
+            "UPDATE prospects SET business_name = ?, website_url = ?, normalized_domain = ?, category = ?, 
+                                 city = ?, state = ?, contact_page_url = ?, email = ?, phone = ?, 
+                                 potential_service_fit = ?, benefit_reason = ?, priority = ?, confidence = ?, 
+                                 status = ?, internal_notes = ?, updated_at = NOW() 
+             WHERE id = ?",
+            [
+                $bName, $wUrl, $norm, $body['category'] ?? $existing['category'],
+                $body['city'] ?? $existing['city'], $body['state'] ?? $existing['state'],
+                $body['contactPageUrl'] ?? $existing['contact_page_url'],
+                !empty($body['email']) ? strtolower(trim($body['email'])) : $existing['email'],
+                $body['phone'] ?? $existing['phone'],
+                $body['potentialServiceFit'] ?? $existing['potential_service_fit'],
+                $body['benefitReason'] ?? $existing['benefit_reason'],
+                $body['priority'] ?? $existing['priority'],
+                $body['confidence'] ?? $existing['confidence'],
+                $newStatus, $body['internalNotes'] ?? $existing['internal_notes'],
+                $pId
+            ]
+        );
+
+        if ($newStatus !== $existing['status']) {
+            $actId = Database::generateUuid();
+            Database::execute(
+                "INSERT INTO prospect_activities (id, prospect_id, admin_id, author_name, activity_type, subject, outcome, performed_at, created_at) 
+                 VALUES (?, ?, ?, ?, 'STATUS_CHANGED', ?, ?, NOW(), NOW())",
+                [$actId, $pId, $admin['id'], $admin['name'], "Status changed from {$existing['status']} to {$newStatus}", $newStatus]
+            );
+        }
+
+        $updated = Database::fetchOne("SELECT * FROM prospects WHERE id = ?", [$pId]);
+        Response::success($updated, 'Prospect updated.');
+    }
+
+    // Schedule Follow-Up: POST /api/admin/prospects/{id}/followup
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'prospects' && isset($segments[2]) && ($segments[3] ?? '') === 'followup' && !isset($segments[4]) && $method === 'POST') {
+        $admin = Auth::requireAuth();
+        $pId = $segments[2];
+        $body = Request::json();
+        $fDate = trim($body['followUpDate'] ?? '');
+        if (empty($fDate)) {
+            Response::error('Follow-up date is required.', 422);
+        }
+
+        $fNote = trim($body['followUpNote'] ?? '');
+        Database::execute(
+            "UPDATE prospects SET follow_up_date = ?, follow_up_status = 'PENDING', follow_up_note = ?, updated_at = NOW() WHERE id = ?",
+            [$fDate, $fNote ?: null, $pId]
+        );
+
+        $nId = Database::generateUuid();
+        Database::execute(
+            "INSERT INTO prospect_notes (id, prospect_id, admin_id, author_name, note, created_at) 
+             VALUES (?, ?, ?, ?, ?, NOW())",
+            [$nId, $pId, $admin['id'], $admin['name'], "Scheduled follow-up for {$fDate}" . ($fNote ? ": {$fNote}" : "")]
+        );
+
+        $updated = Database::fetchOne("SELECT * FROM prospects WHERE id = ?", [$pId]);
+        Response::success($updated, 'Follow-up scheduled.');
+    }
+
+    // Mark Follow-Up Complete: PATCH /api/admin/prospects/{id}/followup/complete
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'prospects' && isset($segments[2]) && ($segments[3] ?? '') === 'followup' && ($segments[4] ?? '') === 'complete' && $method === 'PATCH') {
+        $admin = Auth::requireAuth();
+        $pId = $segments[2];
+
+        Database::execute("UPDATE prospects SET follow_up_status = 'COMPLETED', updated_at = NOW() WHERE id = ?", [$pId]);
+
+        $nId = Database::generateUuid();
+        Database::execute(
+            "INSERT INTO prospect_notes (id, prospect_id, admin_id, author_name, note, created_at) 
+             VALUES (?, ?, ?, ?, 'Marked scheduled follow-up as completed.', NOW())",
+            [$nId, $pId, $admin['id'], $admin['name']]
+        );
+
+        $updated = Database::fetchOne("SELECT * FROM prospects WHERE id = ?", [$pId]);
+        Response::success($updated, 'Follow-up completed.');
+    }
+
+    // Log Outreach Activity: POST /api/admin/prospects/{id}/activities
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'prospects' && isset($segments[2]) && ($segments[3] ?? '') === 'activities' && $method === 'POST') {
+        $admin = Auth::requireAuth();
+        $pId = $segments[2];
+        $body = Request::json();
+
+        $prospect = Database::fetchOne("SELECT * FROM prospects WHERE id = ? LIMIT 1", [$pId]);
+        if (!$prospect) {
+            Response::notFound('Prospect not found.');
+        }
+
+        $type = $body['activityType'] ?? 'EMAIL_DRAFTED';
+        if ($prospect['status'] === 'DO_NOT_CONTACT' && in_array($type, ['EMAIL_SENT_MANUAL', 'CONTACT_FORM_SUBMITTED', 'PHONE_CALL'])) {
+            Response::error('Cannot perform active outreach. This prospect is marked DO_NOT_CONTACT.', 403);
+        }
+
+        $actId = Database::generateUuid();
+        Database::execute(
+            "INSERT INTO prospect_activities (id, prospect_id, admin_id, author_name, activity_type, channel, subject, content, outcome, next_follow_up, performed_at, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
+            [
+                $actId, $pId, $admin['id'], $admin['name'], $type,
+                $body['channel'] ?? 'EMAIL', $body['subject'] ?? null, $body['content'] ?? null,
+                $body['outcome'] ?? null, $body['nextFollowUp'] ?? null
+            ]
+        );
+
+        $statusUpdates = [
+            'EMAIL_SENT_MANUAL'      => 'CONTACTED',
+            'CONTACT_FORM_SUBMITTED' => 'CONTACTED',
+            'REPLY_RECEIVED'         => 'REPLIED',
+            'MEETING_BOOKED'         => 'MEETING_REQUESTED',
+            'PROPOSAL_SENT'          => 'PROPOSAL_SENT'
+        ];
+
+        if (isset($statusUpdates[$type]) && $prospect['status'] !== 'WON' && $prospect['status'] !== 'DO_NOT_CONTACT') {
+            Database::execute("UPDATE prospects SET status = ?, updated_at = NOW() WHERE id = ?", [$statusUpdates[$type], $pId]);
+        }
+
+        $created = Database::fetchOne("SELECT * FROM prospect_activities WHERE id = ?", [$actId]);
+        Response::success($created, 'Outreach activity logged.', 201);
+    }
+
+    // Generate Personalized Draft: POST /api/admin/prospects/{id}/draft
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'prospects' && isset($segments[2]) && ($segments[3] ?? '') === 'draft' && $method === 'POST') {
+        Auth::requireAuth();
+        $pId = $segments[2];
+        $body = Request::json();
+
+        $prospect = Database::fetchOne("SELECT * FROM prospects WHERE id = ? LIMIT 1", [$pId]);
+        if (!$prospect) {
+            Response::notFound('Prospect not found.');
+        }
+
+        if ($prospect['status'] === 'DO_NOT_CONTACT') {
+            Response::error('Draft generation blocked. This prospect is on the suppression list.', 403);
+        }
+
+        $service = $body['service'] ?? $prospect['potential_service_fit'];
+        $bName   = $prospect['business_name'];
+        $citySt  = ($prospect['city'] && $prospect['state']) ? "{$prospect['city']}, {$prospect['state']}" : ($prospect['city'] ?: 'your region');
+        $oppText = $body['observedOpportunity'] ?? $prospect['benefit_reason'] ?: "enhancing your digital web architecture and conversion pipeline in {$citySt}";
+        $valText = $body['proposedValue'] ?? "senior web engineering consultation with transparent milestone delivery and dedicated remote collaboration";
+        $nextSt  = $body['desiredNextStep'] ?? "a brief 15-minute introductory video consultation to review your technical requirements";
+
+        if ($service === 'SEO' || $service === 'SEO Services') {
+            $subject = "Technical Organic Visibility & Search Architecture for {$bName}";
+            $content = "Hi {$bName} Team,\n\nI was reviewing digital presences across {$citySt} and came across {$bName} ({$prospect['website_url']}).\n\nSpecifically, I noted an opportunity around: {$oppText}.\n\nAt House Robotics, we deliver technical SEO architecture, structured schema implementation, and search performance tuning for regional and national enterprises: {$valText}.\n\nWould you be open to {$nextSt}?\n\nWarm regards,\nSameer Liaqat\nPrincipal Strategist, House Robotics\nWhatsApp: +92 347 4542881\nEmail: sameerliaqat81@gmail.com\nWebsite: https://houserobotics.online/";
+        } elseif ($service === 'AI Automation' || $service === 'AI & Automation') {
+            $subject = "Workflow Automation & Process Optimization for {$bName}";
+            $content = "Hi {$bName} Team,\n\nI am reaching out regarding repetitive digital workflows at {$bName}.\n\nIn our research into businesses in {$citySt}, we observed an opportunity for: {$oppText}.\n\nHouse Robotics develops custom API workflows, CRM integration pipelines, and intelligent operational automations that save enterprise teams dozens of manual hours every week without disrupting existing software: {$valText}.\n\nCould we coordinate {$nextSt} to see if custom automations fit your roadmap this quarter?\n\nBest regards,\nSameer Liaqat\nLead Engineering Consultant, House Robotics\nWhatsApp: +92 347 4542881\nEmail: sameerliaqat81@gmail.com\nWebsite: https://houserobotics.online/";
+        } else {
+            $subject = "Custom Web Engineering & Digital Platform for {$bName}";
+            $content = "Hi {$bName} Team,\n\nI came across {$bName} ({$prospect['website_url']}) while reviewing commercial service websites in {$citySt}.\n\nI noticed an opportunity for: {$oppText}.\n\nAt House Robotics, we build custom high-performance web applications, client portals, and modern digital platforms. We pair senior architectural engineering with seamless remote collaboration aligned with US business hours: {$valText}.\n\nWould you have 15 minutes this week for {$nextSt}?\n\nBest regards,\nSameer Liaqat\nFounder & Engineering Lead, House Robotics\nWhatsApp: +92 347 4542881\nEmail: sameerliaqat81@gmail.com\nWebsite: https://houserobotics.online/\nTransparent Remote Collaboration with US Enterprises";
+        }
+
+        $optOut = "\n\n----------------------------------------\nHouse Robotics | Strategic Web Engineering & AI Solutions\nLahore, Pakistan | Serving Remote Clients Across the USA\nOfficial Contact: sameerliaqat81@gmail.com | +92 347 4542881\nOpt-out: If you prefer not to receive strategic engineering briefings from House Robotics, simply reply with \"Unsubscribe\" or \"Do Not Contact\" to be immediately removed from our research list.";
+
+        $fullDraft = $content . $optOut;
+
+        $actId = Database::generateUuid();
+        Database::execute(
+            "INSERT INTO prospect_activities (id, prospect_id, admin_id, author_name, activity_type, channel, subject, content, outcome, performed_at, created_at) 
+             VALUES (?, ?, ?, 'Admin', 'EMAIL_DRAFTED', ?, ?, ?, 'DRAFT_GENERATED', NOW(), NOW())",
+            [$actId, $pId, $body['channel'] ?? 'EMAIL', $subject, $fullDraft]
+        );
+
+        if ($prospect['status'] === 'NEW' || $prospect['status'] === 'RESEARCHED') {
+            Database::execute("UPDATE prospects SET status = 'READY_FOR_OUTREACH', updated_at = NOW() WHERE id = ?", [$pId]);
+        }
+
+        Response::success([
+            'channel'      => $body['channel'] ?? 'EMAIL',
+            'subject'      => $subject,
+            'body'         => $content,
+            'optOutFooter' => $optOut,
+            'fullDraft'    => $fullDraft
+        ]);
+    }
+
+    // Convert Prospect to Lead: POST /api/admin/prospects/{id}/convert
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'prospects' && isset($segments[2]) && ($segments[3] ?? '') === 'convert' && $method === 'POST') {
+        $admin = Auth::requireAuth();
+        $pId = $segments[2];
+        $body = Request::json();
+
+        $prospect = Database::fetchOne("SELECT * FROM prospects WHERE id = ? LIMIT 1", [$pId]);
+        if (!$prospect) {
+            Response::notFound('Prospect not found.');
+        }
+
+        if (!empty($prospect['converted_lead_id'])) {
+            $existingLead = Database::fetchOne("SELECT * FROM leads WHERE id = ? LIMIT 1", [$prospect['converted_lead_id']]);
+            if ($existingLead) {
+                Response::error("Prospect has already been converted to lead inquiry {$existingLead['inquiry_id']}.", 409);
+            }
+        }
+
+        $email = !empty($prospect['email']) ? $prospect['email'] : "contact@{$prospect['normalized_domain']}";
+
+        // Check if lead already exists
+        $dupLead = Database::fetchOne("SELECT * FROM leads WHERE email = ? OR website_url LIKE ? LIMIT 1", [$email, "%{$prospect['normalized_domain']}%"]);
+        if ($dupLead) {
+            Database::execute("UPDATE prospects SET converted_lead_id = ?, converted_at = NOW(), status = 'QUALIFIED' WHERE id = ?", [$dupLead['id'], $pId]);
+            Response::success($dupLead, "Prospect linked to existing lead {$dupLead['inquiry_id']}.");
+        }
+
+        $inquiryId = 'HR-INQ-' . date('Ymd') . '-' . rand(1000, 9999);
+        $leadId = Database::generateUuid();
+
+        Database::execute(
+            "INSERT INTO leads (id, inquiry_id, name, email, phone, company, website_url, city, state, service, budget, timeline, message, source, status, score, follow_up_date, follow_up_status, follow_up_note, consent_given, prospect_id, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'QUALIFIED', 75, ?, ?, ?, 1, ?, NOW(), NOW())",
+            [
+                $leadId, $inquiryId, $prospect['business_name'], $email, $prospect['phone'], $prospect['business_name'], $prospect['website_url'],
+                $prospect['city'], $prospect['state'], $body['service'] ?? $prospect['potential_service_fit'],
+                $body['budget'] ?? null, $body['timeline'] ?? null,
+                "Converted from USA Prospect Manager ({$prospect['normalized_domain']}). Benefit rationale: " . ($prospect['benefit_reason'] ?: 'Direct research'),
+                "Outreach ({$prospect['source_type']})",
+                $prospect['follow_up_date'], $prospect['follow_up_status'], $prospect['follow_up_note'], $pId
+            ]
+        );
+
+        Database::execute("UPDATE prospects SET converted_lead_id = ?, converted_at = NOW(), status = 'QUALIFIED' WHERE id = ?", [$leadId, $pId]);
+
+        // Copy notes
+        $pNotes = Database::fetchAll("SELECT * FROM prospect_notes WHERE prospect_id = ?", [$pId]);
+        foreach ($pNotes as $pn) {
+            $lnId = Database::generateUuid();
+            Database::execute(
+                "INSERT INTO lead_notes (id, lead_id, admin_id, author_name, note, created_at) VALUES (?, ?, ?, ?, ?, NOW())",
+                [$lnId, $leadId, $pn['admin_id'], $pn['author_name'], "[Transferred from Prospect Notes]: {$pn['note']}"]
+            );
+        }
+
+        $createdLead = Database::fetchOne("SELECT * FROM leads WHERE id = ?", [$leadId]);
+        Response::success($createdLead, "Prospect converted to CRM Lead ({$inquiryId}).", 201);
+    }
+
+    // Delete Prospect: DELETE /api/admin/prospects/{id}
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'prospects' && isset($segments[2]) && !isset($segments[3]) && $method === 'DELETE') {
+        Auth::requireAuth();
+        $pId = $segments[2];
+        Database::execute("DELETE FROM prospects WHERE id = ?", [$pId]);
+        Response::success([], 'Prospect deleted.');
     }
 
     // -------------------------------------------------------------------------
@@ -2115,6 +3338,310 @@ try {
         Database::execute("DELETE FROM admin_users WHERE id = ?", [$targetId]);
         Response::success(null, 'Administrator removed.');
     }
+
+    // -------------------------------------------------------------------------
+    // 24. Admin USA Locations & Landing Pages CMS
+    // -------------------------------------------------------------------------
+    if (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'locations') {
+        $admin = Auth::requireAuth();
+
+        // GET /api/admin/locations/stats
+        if (($segments[2] ?? '') === 'stats' && $method === 'GET') {
+            $totalStates = (int)Database::fetchColumn("SELECT COUNT(*) FROM usa_states");
+            $totalCities = (int)Database::fetchColumn("SELECT COUNT(*) FROM usa_cities");
+            $totalPages = (int)Database::fetchColumn("SELECT COUNT(*) FROM usa_location_pages");
+            $publishedPages = (int)Database::fetchColumn("SELECT COUNT(*) FROM usa_location_pages WHERE status = 'PUBLISHED'");
+            $draftPages = (int)Database::fetchColumn("SELECT COUNT(*) FROM usa_location_pages WHERE status = 'DRAFT'");
+            $leadsByLocation = Database::fetchAll("SELECT id, name, email, city, state, service, page_url, created_at FROM leads WHERE page_url LIKE '%/usa/%' OR city IS NOT NULL ORDER BY created_at DESC LIMIT 20");
+
+            Response::success([
+                'totalStates' => $totalStates,
+                'totalCities' => $totalCities,
+                'totalPages' => $totalPages,
+                'publishedPages' => $publishedPages,
+                'draftPages' => $draftPages,
+                'leadsByLocation' => $leadsByLocation
+            ]);
+        }
+
+        // GET /api/admin/locations - Paginated & filtered list
+        if (!isset($segments[2]) && $method === 'GET') {
+            $state = $_GET['state'] ?? '';
+            $status = $_GET['status'] ?? '';
+            $search = $_GET['search'] ?? '';
+            $page = max(1, (int)($_GET['page'] ?? 1));
+            $limit = max(1, min(100, (int)($_GET['limit'] ?? 25)));
+            $offset = ($page - 1) * $limit;
+
+            $whereClauses = [];
+            $params = [];
+
+            if (!empty($state)) {
+                $whereClauses[] = "state_slug = ?";
+                $params[] = $state;
+            }
+            if (!empty($status)) {
+                $whereClauses[] = "status = ?";
+                $params[] = $status;
+            }
+            if (!empty($search)) {
+                $whereClauses[] = "(h1_title LIKE ? OR url_path LIKE ? OR focus_keyword LIKE ? OR city_slug LIKE ?)";
+                $s = "%{$search}%";
+                $params[] = $s; $params[] = $s; $params[] = $s; $params[] = $s;
+            }
+
+            $whereSql = !empty($whereClauses) ? "WHERE " . implode(' AND ', $whereClauses) : "";
+            $total = (int)Database::fetchColumn("SELECT COUNT(*) FROM usa_location_pages {$whereSql}", $params);
+
+            $pages = Database::fetchAll("SELECT * FROM usa_location_pages {$whereSql} ORDER BY updated_at DESC LIMIT {$limit} OFFSET {$offset}", $params);
+            $states = Database::fetchAll("SELECT slug, name, code FROM usa_states ORDER BY name ASC");
+
+            Response::success([
+                'data' => $pages,
+                'states' => $states,
+                'pagination' => [
+                    'page' => $page,
+                    'limit' => $limit,
+                    'totalPages' => ceil($total / $limit),
+                    'total' => $total
+                ]
+            ]);
+        }
+
+        // POST /api/admin/locations/page - Create page
+        if (($segments[2] ?? '') === 'page' && !isset($segments[3]) && $method === 'POST') {
+            $input = Security::getJsonInput();
+            $id = Database::generateUuid();
+            $cleanUrl = '/' . trim($input['urlPath'] ?? '', '/');
+            $now = date('Y-m-d H:i:s');
+
+            Database::execute(
+                "INSERT INTO usa_location_pages (id, page_type, state_slug, city_slug, service_slug, url_path, h1_title, hero_kicker, hero_subtitle, meta_title, meta_description, focus_keyword, secondary_keywords, canonical_url, og_title, og_description, og_image, content_intro, local_industry_focus, business_problems_solved, service_deliverables, suitable_customer_types, remote_collaboration_model, process_steps, illustrative_scenarios, faqs, quality_gate_passed, quality_review_notes, verified_at, status, no_index, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    $id,
+                    $input['pageType'] ?? 'CITY_SERVICE',
+                    $input['stateSlug'] ?? '',
+                    $input['citySlug'] ?? null,
+                    $input['serviceSlug'] ?? null,
+                    $cleanUrl,
+                    $input['h1Title'] ?? '',
+                    $input['heroKicker'] ?? null,
+                    $input['heroSubtitle'] ?? null,
+                    $input['metaTitle'] ?? '',
+                    $input['metaDescription'] ?? '',
+                    $input['focusKeyword'] ?? null,
+                    $input['secondaryKeywords'] ?? null,
+                    $input['canonicalUrl'] ?? "https://houserobotics.online{$cleanUrl}",
+                    $input['ogTitle'] ?? $input['metaTitle'] ?? null,
+                    $input['ogDescription'] ?? $input['metaDescription'] ?? null,
+                    $input['ogImage'] ?? '/images/services/seo-hero.webp',
+                    $input['contentIntro'] ?? '',
+                    is_array($input['localIndustryFocus'] ?? null) ? json_encode($input['localIndustryFocus']) : ($input['localIndustryFocus'] ?? null),
+                    is_array($input['businessProblemsSolved'] ?? null) ? json_encode($input['businessProblemsSolved']) : ($input['businessProblemsSolved'] ?? null),
+                    is_array($input['serviceDeliverables'] ?? null) ? json_encode($input['serviceDeliverables']) : ($input['serviceDeliverables'] ?? null),
+                    is_array($input['suitableCustomerTypes'] ?? null) ? json_encode($input['suitableCustomerTypes']) : ($input['suitableCustomerTypes'] ?? null),
+                    $input['remoteCollaborationModel'] ?? '',
+                    is_array($input['processSteps'] ?? null) ? json_encode($input['processSteps']) : ($input['processSteps'] ?? null),
+                    is_array($input['illustrativeScenarios'] ?? null) ? json_encode($input['illustrativeScenarios']) : ($input['illustrativeScenarios'] ?? null),
+                    is_array($input['faqs'] ?? null) ? json_encode($input['faqs']) : ($input['faqs'] ?? null),
+                    !empty($input['qualityGatePassed']) ? 1 : 0,
+                    $input['qualityReviewNotes'] ?? 'Quality gate passed.',
+                    $now,
+                    $input['status'] ?? 'PUBLISHED',
+                    !empty($input['noIndex']) ? 1 : 0,
+                    $now,
+                    $now
+                ]
+            );
+
+            Response::success(['id' => $id, 'urlPath' => $cleanUrl], 'Location page created successfully.', 201);
+        }
+
+        // PUT /api/admin/locations/page/{id} - Update page
+        if (($segments[2] ?? '') === 'page' && isset($segments[3]) && $method === 'PUT') {
+            $pageId = $segments[3];
+            $input = Security::getJsonInput();
+            $now = date('Y-m-d H:i:s');
+
+            Database::execute(
+                "UPDATE usa_location_pages SET 
+                    h1_title = COALESCE(?, h1_title),
+                    hero_kicker = COALESCE(?, hero_kicker),
+                    hero_subtitle = COALESCE(?, hero_subtitle),
+                    meta_title = COALESCE(?, meta_title),
+                    meta_description = COALESCE(?, meta_description),
+                    focus_keyword = COALESCE(?, focus_keyword),
+                    secondary_keywords = COALESCE(?, secondary_keywords),
+                    canonical_url = COALESCE(?, canonical_url),
+                    og_title = COALESCE(?, og_title),
+                    og_description = COALESCE(?, og_description),
+                    og_image = COALESCE(?, og_image),
+                    content_intro = COALESCE(?, content_intro),
+                    quality_review_notes = COALESCE(?, quality_review_notes),
+                    status = COALESCE(?, status),
+                    updated_at = ?
+                 WHERE id = ?",
+                [
+                    $input['h1Title'] ?? null,
+                    $input['heroKicker'] ?? null,
+                    $input['heroSubtitle'] ?? null,
+                    $input['metaTitle'] ?? null,
+                    $input['metaDescription'] ?? null,
+                    $input['focusKeyword'] ?? null,
+                    $input['secondaryKeywords'] ?? null,
+                    $input['canonicalUrl'] ?? null,
+                    $input['ogTitle'] ?? null,
+                    $input['ogDescription'] ?? null,
+                    $input['ogImage'] ?? null,
+                    $input['contentIntro'] ?? null,
+                    $input['qualityReviewNotes'] ?? null,
+                    $input['status'] ?? null,
+                    $now,
+                    $pageId
+                ]
+            );
+
+            Response::success(['id' => $pageId], 'Location page updated successfully.');
+        }
+
+        // DELETE /api/admin/locations/page/{id} - Delete page
+        if (($segments[2] ?? '') === 'page' && isset($segments[3]) && $method === 'DELETE') {
+            $pageId = $segments[3];
+            Database::execute("DELETE FROM usa_location_pages WHERE id = ?", [$pageId]);
+            Response::success(null, 'Location page deleted.');
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 25. Administrator SEO & Lead Reports API
+    // -------------------------------------------------------------------------
+    if (($path === '/admin/reports' || (($segments[0] ?? '') === 'admin' && ($segments[1] ?? '') === 'reports')) && $method === 'GET') {
+        Auth::requireAuth();
+
+        $dateRange = $_GET['dateRange'] ?? 'all';
+        $service   = $_GET['service'] ?? null;
+        $city      = $_GET['city'] ?? null;
+        $state     = $_GET['state'] ?? null;
+        $status    = $_GET['status'] ?? null;
+        $pageUrl   = $_GET['pageUrl'] ?? null;
+
+        $where = [];
+        $params = [];
+
+        if ($dateRange === '7d') {
+            $where[] = "created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+        } elseif ($dateRange === '30d') {
+            $where[] = "created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+        } elseif ($dateRange === '90d') {
+            $where[] = "created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)";
+        }
+
+        if ($service && $service !== 'all') {
+            $where[] = "service LIKE ?";
+            $params[] = "%{$service}%";
+        }
+        if ($city && $city !== 'all') {
+            $where[] = "city LIKE ?";
+            $params[] = "%{$city}%";
+        }
+        if ($state && $state !== 'all') {
+            $where[] = "state LIKE ?";
+            $params[] = "%{$state}%";
+        }
+        if ($status && $status !== 'all') {
+            $where[] = "status = ?";
+            $params[] = $status;
+        }
+
+        $whereClause = !empty($where) ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+        $leads = Database::fetchAll(
+            "SELECT id, inquiry_id as inquiryId, name, email, company, service, budget, source, status, city, state, page_url as pageUrl, utm_source as utmSource, created_at as createdAt 
+             FROM leads {$whereClause} ORDER BY created_at DESC",
+            $params
+        );
+
+        $totalAllTime = (int)Database::fetchColumn("SELECT COUNT(*) FROM leads");
+
+        // Breakdowns
+        $serviceCounts = [];
+        $cityCounts = [];
+        $statusCounts = ['NEW' => 0, 'CONTACTED' => 0, 'QUALIFIED' => 0, 'PROPOSAL_SENT' => 0, 'WON' => 0, 'LOST' => 0];
+        $sourceCounts = [];
+
+        foreach ($leads as $l) {
+            $s = !empty($l['service']) ? $l['service'] : 'Unspecified';
+            $serviceCounts[$s] = ($serviceCounts[$s] ?? 0) + 1;
+
+            if (!empty($l['city'])) {
+                $c = trim($l['city'] . ', ' . ($l['state'] ?? ''), ', ');
+                $cityCounts[$c] = ($cityCounts[$c] ?? 0) + 1;
+            }
+
+            $st = $l['status'] ?? 'NEW';
+            if (isset($statusCounts[$st])) {
+                $statusCounts[$st]++;
+            } else {
+                $statusCounts[$st] = 1;
+            }
+
+            $src = !empty($l['utmSource']) ? $l['utmSource'] : (!empty($l['source']) ? $l['source'] : 'Organic Search');
+            $sourceCounts[$src] = ($sourceCounts[$src] ?? 0) + 1;
+        }
+
+        arsort($serviceCounts);
+        arsort($cityCounts);
+        arsort($sourceCounts);
+
+        $topServices = [];
+        foreach ($serviceCounts as $k => $v) $topServices[] = ['name' => $k, 'count' => $v];
+
+        $topCities = [];
+        foreach ($cityCounts as $k => $v) $topCities[] = ['name' => $k, 'count' => $v];
+
+        $topSources = [];
+        foreach ($sourceCounts as $k => $v) $topSources[] = ['name' => $k, 'count' => $v];
+
+        $locationPages = Database::fetchAll(
+            "SELECT id, h1_title as title, url_path as urlPath, city_slug as city, state_slug as state, service_slug as service, leads_count as leadsCount 
+             FROM usa_location_pages WHERE status = 'PUBLISHED' ORDER BY leads_count DESC LIMIT 15"
+        );
+
+        $eventCounts = Database::fetchAll(
+            "SELECT event_type as eventType, COUNT(*) as count FROM analytics_events GROUP BY event_type"
+        );
+
+        $gaSetting = Database::fetchColumn("SELECT value FROM site_settings WHERE `key` = 'analytics_ga_id' LIMIT 1");
+        $gscSetting = Database::fetchColumn("SELECT value FROM site_settings WHERE `key` = 'gsc_verification' LIMIT 1");
+
+        Response::success([
+            'summary' => [
+                'totalMatchingLeads' => count($leads),
+                'totalAllTimeLeads'  => $totalAllTime,
+                'qualifiedLeads'     => $statusCounts['QUALIFIED'] ?? 0,
+                'wonLeads'           => $statusCounts['WON'] ?? 0
+            ],
+            'statusDistribution' => $statusCounts,
+            'topServices'        => $topServices,
+            'topCities'          => $topCities,
+            'topSources'         => $topSources,
+            'topLocationPages'   => $locationPages,
+            'eventsSummary'      => $eventCounts,
+            'recentLeads'        => array_slice($leads, 0, 10),
+            'externalAnalytics'  => [
+                'googleAnalytics' => [
+                    'connected'  => !empty($gaSetting) && $gaSetting !== 'G-HOUSEROBOTICS',
+                    'trackingId' => $gaSetting ?: 'Not Configured (Requires GA4 Measurement ID in Site Settings)'
+                ],
+                'searchConsole' => [
+                    'connected'    => !empty($gscSetting),
+                    'verification' => $gscSetting ?: 'Pending GSC HTML Tag / Domain DNS Verification'
+                ]
+            ]
+        ]);
+    }
+
 
     // -------------------------------------------------------------------------
     // Fallback: 404 Endpoint Not Found

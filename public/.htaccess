@@ -61,8 +61,8 @@ ServerSignature Off
     RewriteRule ^privacy(-policy)?/?$ / [R=301,L,NC]
     RewriteRule ^terms(-of-service)?/?$ / [R=301,L,NC]
 
-    # 3d. Explicit 200 SPA route for the 5 Restored Articles (Guarantees HTTP 200, Never 404 or redirect)
-    RewriteRule ^(how-much-does-seo-cost-in-the-uk|what-is-seo-and-why-does-your-business-need-it|seo-vs-ppc-which-is-better-for-your-business|how-google-business-profile-helps-local-businesses|how-to-improve-your-google-rankings-in-2026)/?$ index.html [L,QSA]
+    # 3d. Explicit 200 SPA route for the 5 Restored Articles (Guarantees HTTP 200 & Server Meta Injection)
+    RewriteRule ^(how-much-does-seo-cost-in-the-uk|what-is-seo-and-why-does-your-business-need-it|seo-vs-ppc-which-is-better-for-your-business|how-google-business-profile-helps-local-businesses|how-to-improve-your-google-rankings-in-2026)/?$ index.php [L,QSA]
 
     # 4. Dynamic XML Sitemap and Robots.txt (Fallback if static file does not exist)
     RewriteCond %{REQUEST_FILENAME} !-f
@@ -80,14 +80,14 @@ ServerSignature Off
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # 6. React Single Page Application (SPA) Catch-All
-    # Send only frontend client routes to index.html. NEVER route /api, /uploads, or PHP scripts to index.html
+    # 6. React Single Page Application (SPA) Catch-All & Server-Side Metadata Injector
+    # Send only frontend client routes to index.php for live SEO pre-rendering. NEVER route /api, /uploads, or PHP scripts
     RewriteCond %{REQUEST_URI} !^/api [NC]
     RewriteCond %{REQUEST_URI} !^/uploads [NC]
     RewriteCond %{REQUEST_URI} !\.php$ [NC]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^ index.html [L]
+    RewriteRule ^ index.php [L]
 </IfModule>
 
 # 7. Browser Caching for Performance

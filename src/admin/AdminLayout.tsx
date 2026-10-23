@@ -18,7 +18,10 @@ import {
   Menu, 
   X, 
   ChevronRight,
-  Sparkles
+  Sparkles,
+  MapPin,
+  BarChart3,
+  Target
 } from 'lucide-react';
 import { AdminLogin } from './AdminLogin';
 import { DashboardView } from './views/DashboardView';
@@ -31,9 +34,12 @@ import { FaqsView } from './views/FaqsView';
 import { NewsletterView } from './views/NewsletterView';
 import { MediaView } from './views/MediaView';
 import { SeoView } from './views/SeoView';
+import { UsaSeoView } from './views/UsaSeoView';
+import { SeoReportingView } from './views/SeoReportingView';
 import { SettingsView } from './views/SettingsView';
 import { ActivityLogView } from './views/ActivityLogView';
 import { UsersView } from './views/UsersView';
+import { ProspectsView } from './views/ProspectsView';
 import { adminGetMe, adminLogout } from '../utils/api';
 
 interface AdminLayoutProps {
@@ -97,6 +103,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite }) => 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'leads', label: 'Leads CRM', icon: Users },
+    { id: 'prospects', label: 'USA Prospects', icon: Target },
     { id: 'messages', label: 'Inquiries', icon: MessageSquare },
     { id: 'services', label: 'Services (21)', icon: Briefcase },
     { id: 'blog', label: 'Blog CMS', icon: FileText },
@@ -105,6 +112,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite }) => 
     { id: 'newsletter', label: 'Newsletter', icon: Send },
     { id: 'media', label: 'Media Library', icon: ImageIcon },
     { id: 'seo', label: 'SEO & Metadata', icon: Globe },
+    { id: 'usa-seo', label: 'USA SEO Manager', icon: MapPin },
+    { id: 'seo-reports', label: 'SEO & Lead Reports', icon: BarChart3 },
     { id: 'settings', label: 'Site Settings', icon: Settings },
     { id: 'activity', label: 'Activity Logs', icon: Activity },
     { id: 'users', label: 'Admin Users', icon: ShieldCheck, superOnly: true }
@@ -251,6 +260,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite }) => 
         <main className="flex-1">
           {activeTab === 'dashboard' && <DashboardView onNavigateTab={(tab) => setActiveTab(tab)} />}
           {activeTab === 'leads' && <LeadsView />}
+          {activeTab === 'prospects' && <ProspectsView />}
           {activeTab === 'messages' && <MessagesView />}
           {activeTab === 'services' && <ServicesView />}
           {activeTab === 'blog' && <BlogView />}
@@ -259,6 +269,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite }) => 
           {activeTab === 'newsletter' && <NewsletterView />}
           {activeTab === 'media' && <MediaView />}
           {activeTab === 'seo' && <SeoView />}
+          {activeTab === 'usa-seo' && <UsaSeoView />}
+          {activeTab === 'seo-reports' && <SeoReportingView />}
           {activeTab === 'settings' && <SettingsView />}
           {activeTab === 'activity' && <ActivityLogView />}
           {activeTab === 'users' && <UsersView />}

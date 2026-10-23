@@ -21,9 +21,14 @@ import { BlogPage } from './pages/BlogPage';
 import { ServiceDetailPage } from './pages/ServiceDetailPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { AdminLayout } from './admin/AdminLayout';
+import { UsaHubPage } from './pages/usa/UsaHubPage';
+import { StateOverviewPage } from './pages/usa/StateOverviewPage';
+import { CityOverviewPage } from './pages/usa/CityOverviewPage';
+import { CityServiceLandingPage } from './pages/usa/CityServiceLandingPage';
 import { AGENCY_INFO } from './data/agencyData';
 import { applyPageSeo } from './utils/seo';
 import { MessageSquare, ArrowUp, X, Sparkles } from 'lucide-react';
+import { apiTrackEvent } from './utils/api';
 
 const RESTORED_BLOG_SLUGS = [
   'how-much-does-seo-cost-in-the-uk',
@@ -33,10 +38,22 @@ const RESTORED_BLOG_SLUGS = [
   'how-to-improve-your-google-rankings-in-2026'
 ];
 
+export const parseUsaParams = (pathname: string) => {
+  const clean = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  const segments = clean.split('/');
+  if (segments[0] !== 'usa') return {};
+  return {
+    stateSlug: segments[1] || undefined,
+    citySlug: segments[2] || undefined,
+    serviceSlug: segments[3] || undefined
+  };
+};
+
 const getPageFromPath = (pathname: string): PageView => {
   const clean = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
   if (!clean || clean === 'home') return 'home';
   if (clean.startsWith('admin')) return 'admin';
+  if (clean === 'usa' || clean.startsWith('usa/')) return 'usa';
   if (clean === 'about') return 'about';
   if (clean === 'services') return 'services';
   if (clean === 'seo') return 'seo';
@@ -70,13 +87,20 @@ export default function App() {
     return 'home';
   });
 
+  const [usaRoute, setUsaRoute] = useState<{ stateSlug?: string; citySlug?: string; serviceSlug?: string }>(() => {
+    if (typeof window !== 'undefined') {
+      return parseUsaParams(window.location.pathname);
+    }
+    return {};
+  });
+
   const [consultationModalOpen, setConsultationModalOpen] = useState(false);
   const [consultationService, setConsultationService] = useState<string>('SEO');
   const [selectedBlogArticle, setSelectedBlogArticle] = useState<BlogPost | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    if (currentPage !== 'admin' && currentPage !== 'blog') {
+    if (currentPage !== 'admin' && currentPage !== 'blog' && currentPage !== 'usa') {
       applyPageSeo(currentPage === 'home' ? '/' : `/${currentPage}`);
     }
   }, [currentPage]);
@@ -93,12 +117,33 @@ export default function App() {
     const handlePopState = () => {
       const page = getPageFromPath(window.location.pathname);
       setCurrentPage(page);
+      if (page === 'usa') {
+        setUsaRoute(parseUsaParams(window.location.pathname));
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  const handleNavigatePath = (path: string) => {
+    const page = getPageFromPath(path);
+    setCurrentPage(page);
+    if (page === 'usa') {
+      setUsaRoute(parseUsaParams(path));
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window !== 'undefined') {
+      if (window.location.pathname !== path) {
+        window.history.pushState({}, '', path);
+      }
+    }
+  };
+
   const handleNavigate = (page: PageView) => {
+    if (page === 'usa') {
+      handleNavigatePath('/usa');
+      return;
+    }
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (typeof window !== 'undefined') {
@@ -251,6 +296,36 @@ export default function App() {
           />
         )}
 
+        {currentPage === 'usa' && (
+          !usaRoute.stateSlug ? (
+            <UsaHubPage
+              onNavigatePath={handleNavigatePath}
+              onOpenConsultation={handleOpenConsultation}
+            />
+          ) : !usaRoute.citySlug ? (
+            <StateOverviewPage
+              stateSlug={usaRoute.stateSlug}
+              onNavigatePath={handleNavigatePath}
+              onOpenConsultation={handleOpenConsultation}
+            />
+          ) : !usaRoute.serviceSlug ? (
+            <CityOverviewPage
+              stateSlug={usaRoute.stateSlug}
+              citySlug={usaRoute.citySlug}
+              onNavigatePath={handleNavigatePath}
+              onOpenConsultation={handleOpenConsultation}
+            />
+          ) : (
+            <CityServiceLandingPage
+              stateSlug={usaRoute.stateSlug}
+              citySlug={usaRoute.citySlug}
+              serviceSlug={usaRoute.serviceSlug}
+              onNavigatePath={handleNavigatePath}
+              onOpenConsultation={handleOpenConsultation}
+            />
+          )
+        )}
+
         {currentPage === 'not-found' && (
           <NotFoundPage onNavigate={handleNavigate} />
         )}
@@ -280,6 +355,9 @@ export default function App() {
           href={AGENCY_INFO.whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => {
+            apiTrackEvent({ eventType: 'WHATSAPP_CLICK', eventName: 'Floating WhatsApp Click', pageUrl: window.location.pathname });
+          }}
           className="group flex items-center gap-2.5 px-4 py-3 rounded-full bg-white border border-[#E9E7F2] text-neutral-800 shadow-[0_10px_30px_rgba(109,40,217,0.12)] hover:shadow-[0_15px_35px_rgba(109,40,217,0.2)] transition-all hover:-translate-y-0.5"
         >
           <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
